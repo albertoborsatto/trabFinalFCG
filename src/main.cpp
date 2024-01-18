@@ -46,6 +46,8 @@
 #include "utils.h"
 #include "matrices.h"
 
+#define PI 3.14159265358979323846f
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -540,9 +542,22 @@ int main(int argc, char* argv[])
         model = Matrix_Translate(0.0f, -1.0f, -4.0f)
               * Matrix_Scale(2.0f, 1.0f, 2.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
+        glUniform1i(g_object_id_uniform, WALL);
         DrawVirtualObject("the_wall");
 
+        model = Matrix_Translate(0.0f, -1.0f, 4.0f)
+              * Matrix_Scale(2.0f, 1.0f, 2.0f)
+              * Matrix_Rotate_Y(PI);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, WALL);
+        DrawVirtualObject("the_wall");
+
+        model = Matrix_Translate(-4.0f, -1.0f, 0.0f)
+              * Matrix_Scale(2.0f, 1.0f, 2.0f)
+              * Matrix_Rotate_Y(PI/2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, WALL);
+        DrawVirtualObject("the_wall");
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
         TextRendering_ShowEulerAngles(window);

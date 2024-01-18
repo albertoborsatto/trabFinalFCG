@@ -53,9 +53,6 @@ void main()
     vec4 vetorDirecao = vec4(0.0, -1.0, 0.0, 0.0);
     float trintaGraus = radians(30);
 
-
-
-
     // Parâmetros que definem as propriedades espectrais da superfície
     vec3 Kd; // Refletância difusa
     vec3 Ks; // Refletância especular
