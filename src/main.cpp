@@ -156,6 +156,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 void DrawCube(GLint render_as_black_uniform); // Desenha um cubo
 
 void RenderScenario(glm::mat4 model);
+void RenderPistol(glm::mat4 pistol);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -259,6 +260,8 @@ glm::vec4 camera_up_vector;
 float delta_t;
 float speed;
 float prev_time;
+
+glm::mat4 pistol;
 
 int main(int argc, char* argv[])
 {
@@ -542,6 +545,8 @@ int main(int argc, char* argv[])
         //Desenhamos o cenário
         RenderScenario(model);
 
+        RenderPistol(pistol);
+
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
         TextRendering_ShowEulerAngles(window);
@@ -603,12 +608,36 @@ void RenderScenario(glm::mat4 model) {
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, WALL);
         DrawVirtualObject("the_wall");
+}
 
-        model = Matrix_Translate(0.0f, -1.0f, 0.0f)
-              * Matrix_Scale(0.05f, 0.05f, 0.05f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PISTOL);
-        DrawVirtualObject("the_pistol");
+/*
+void RenderPistol(glm::mat4 pistol) {
+    // Assuming camera_position_c is the camera's position
+    glm::mat4 camera_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-camera_position_c));
+
+    // Assuming camera_orientation_c is the camera's orientation
+    // (you might need to adjust this based on how your camera system works)
+    glm::mat4 view_matrix = glm::lookAt(glm::vec3(camera_position_c), glm::vec3(camera_position_c + camera_view_vector), glm::vec3(0, 1, 0));
+
+    // Assuming pistol_model is the pistol's model matrix
+    pistol = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z) * Matrix_Scale(1.0f, 1.0f, 1.0f);
+
+    // Combine the camera and pistol transformations
+    glm::mat4 combined_model = view_matrix * pistol;
+
+    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(combined_model));
+    glUniform1i(g_object_id_uniform, PISTOL);
+    DrawVirtualObject("the_pistol");
+}
+*/
+
+void RenderPistol(glm::mat4 pistol) {
+    pistol = Matrix_Translate(camera_position_c.x+0.05f, camera_position_c.y-0.22f, camera_position_c.z-0.2f)
+              * Matrix_Scale(0.05f, 0.05f, 0.05f)
+              * Matrix_Rotate_Y(3*PI/2.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(pistol));
+    glUniform1i(g_object_id_uniform, PISTOL);
+    DrawVirtualObject("the_pistol");
 }
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
