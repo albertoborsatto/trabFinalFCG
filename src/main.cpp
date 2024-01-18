@@ -155,6 +155,8 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 void DrawCube(GLint render_as_black_uniform); // Desenha um cubo
 
+void RenderScenario(glm::mat4 model);
+
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
 struct SceneObject
@@ -532,32 +534,9 @@ int main(int argc, char* argv[])
         DrawVirtualObject("the_bunny");
         */
 
-        //Desenhamos o modelo do chão
-        model = Matrix_Translate(0.0f,-1.0f, 0.0f)
-              * Matrix_Scale(2.0f, 1.0f, 2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("the_plane");
+        //Desenhamos o cenário
+        RenderScenario(model);
 
-        model = Matrix_Translate(0.0f, -1.0f, -4.0f)
-              * Matrix_Scale(2.0f, 1.0f, 2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, WALL);
-        DrawVirtualObject("the_wall");
-
-        model = Matrix_Translate(0.0f, -1.0f, 4.0f)
-              * Matrix_Scale(2.0f, 1.0f, 2.0f)
-              * Matrix_Rotate_Y(PI);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, WALL);
-        DrawVirtualObject("the_wall");
-
-        model = Matrix_Translate(-4.0f, -1.0f, 0.0f)
-              * Matrix_Scale(2.0f, 1.0f, 2.0f)
-              * Matrix_Rotate_Y(PI/2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, WALL);
-        DrawVirtualObject("the_wall");
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
         TextRendering_ShowEulerAngles(window);
@@ -589,6 +568,36 @@ int main(int argc, char* argv[])
 
     // Fim do programa
     return 0;
+}
+
+void RenderScenario(glm::mat4 model) {
+
+    //Desenhamos o modelo do chão
+        model = Matrix_Translate(0.0f,-1.0f, 0.0f)
+              * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE);
+        DrawVirtualObject("the_plane");
+
+        model = Matrix_Translate(0.0f, -1.0f, -4.0f)
+              * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, WALL);
+        DrawVirtualObject("the_wall");
+
+        model = Matrix_Translate(0.0f, -1.0f, 4.0f)
+              * Matrix_Scale(2.0f, 1.0f, 2.0f)
+              * Matrix_Rotate_Y(PI);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, WALL);
+        DrawVirtualObject("the_wall");
+
+        model = Matrix_Translate(-4.0f, -1.0f, 0.0f)
+              * Matrix_Scale(2.0f, 1.0f, 2.0f)
+              * Matrix_Rotate_Y(PI/2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, WALL);
+        DrawVirtualObject("the_wall");
 }
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
