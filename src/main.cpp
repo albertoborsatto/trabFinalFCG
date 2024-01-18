@@ -353,6 +353,10 @@ int main(int argc, char* argv[])
     ComputeNormals(&wallmodel);
     BuildTrianglesAndAddToVirtualScene(&wallmodel);
 
+    ObjModel pistolmodel("../../data/pistol.obj");
+    ComputeNormals(&pistolmodel);
+    BuildTrianglesAndAddToVirtualScene(&pistolmodel);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -516,6 +520,7 @@ int main(int argc, char* argv[])
         #define BUNNY  1
         #define PLANE  2
         #define WALL   3
+        #define PISTOL 4
 
         /*
         // Desenhamos o modelo da esfera
@@ -598,6 +603,12 @@ void RenderScenario(glm::mat4 model) {
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, WALL);
         DrawVirtualObject("the_wall");
+
+        model = Matrix_Translate(0.0f, -1.0f, 0.0f)
+              * Matrix_Scale(0.05f, 0.05f, 0.05f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PISTOL);
+        DrawVirtualObject("the_pistol");
 }
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
