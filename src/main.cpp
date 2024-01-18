@@ -213,6 +213,7 @@ bool tecla_W_pressionada = false;
 bool tecla_A_pressionada = false;
 bool tecla_S_pressionada = false;
 bool tecla_D_pressionada = false;
+bool free_Camera = false;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
@@ -340,8 +341,8 @@ int main(int argc, char* argv[])
     glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
     glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
-    GLint model_uniform           = glGetUniformLocation(g_GpuProgramID, "model"); // Variável da matriz "model"
-    GLint render_as_black_uniform = glGetUniformLocation(g_GpuProgramID, "render_as_black"); // Variável booleana em shader_vertex.glsl
+    //GLint model_uniform           = glGetUniformLocation(g_GpuProgramID, "model"); // Variável da matriz "model"
+    //GLint render_as_black_uniform = glGetUniformLocation(g_GpuProgramID, "render_as_black"); // Variável booleana em shader_vertex.glsl
     float delta_t;
     float speed = 2.0f;
     float prev_time = (float)glfwGetTime();
@@ -352,11 +353,15 @@ int main(int argc, char* argv[])
     // Agora computamos a matriz de Projeção.
     glm::mat4 projection;
     // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
+
     while (!glfwWindowShouldClose(window))
     {
-        float current_time = (float)glfwGetTime();
-        delta_t = current_time - prev_time;
-        prev_time = current_time;
+        if (free_Camera == true)
+        {
+            float current_time = (float)glfwGetTime();
+            delta_t = current_time - prev_time;
+            prev_time = current_time;
+        }
         // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
@@ -374,6 +379,24 @@ int main(int argc, char* argv[])
         // Pedimos para a GPU utilizar o programa de GPU criado acima (contendo
         // os shaders de vértice e fragmentos).
         glUseProgram(g_GpuProgramID);
+
+        if(free_Camera == false){
+            // Computamos a posição da câmera utilizando coordenadas esféricas.  As
+            // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
+            // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
+            // e ScrollCallback().
+            float r = g_CameraDistance;
+            float y = r*sin(g_CameraPhi);
+            float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
+            float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
+
+            // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
+            // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+            glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+            glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+            glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+        }
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
@@ -416,46 +439,31 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        model = model * Matrix_Translate(g_TorsoPositionX - 1.0f, g_TorsoPositionY + 1.0f, 0.0f);
-        // Guardamos matriz model atual na pilha
-        PushMatrix(model);
-            // Atualizamos a matriz model (multiplicação à direita) para fazer um escalamento do torso
-            model = model * Matrix_Scale(0.8f, 1.0f, 0.2f);
-            // Enviamos a matriz "model" para a placa de vídeo (GPU). Veja o
-            // arquivo "shader_vertex.glsl", onde esta é efetivamente
-            // aplicada em todos os pontos.
-            glUniformMatrix4fv(model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            // Desenhamos um cubo. Esta renderização irá executar o Vertex
-            // Shader definido no arquivo "shader_vertex.glsl", e o mesmo irá
-            // utilizar as matrizes "model", "view" e "projection" definidas
-            // acima e já enviadas para a placa de vídeo (GPU).
-            DrawCube(render_as_black_uniform); // #### TORSO
-        // Tiramos da pilha a matriz model guardada anteriormente
-        PopMatrix(model);
+        if(free_Camera==true) {
+            glm::vec4 w = -camera_view_vector / norm(camera_view_vector);
+            glm::vec4 u = crossproduct(camera_up_vector, w) / norm(crossproduct(camera_up_vector, w));
 
-        glm::vec4 w = -camera_view_vector / norm(camera_view_vector);
-        glm::vec4 u = crossproduct(camera_up_vector, w) / norm(crossproduct(camera_up_vector, w));
+            y = r*sin(g_CameraPhi);
+            z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
+            x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
+            camera_view_vector = glm::vec4(-x,-y,-z,0.0f);
 
-        y = r*sin(g_CameraPhi);
-        z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
-        x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
-        camera_view_vector = glm::vec4(-x,-y,-z,0.0f);
+            if (tecla_D_pressionada)
+                // Movimenta câmera para direita
+                camera_position_c += u * speed * delta_t;
 
-        if (tecla_D_pressionada)
-            // Movimenta câmera para direita
-            camera_position_c += u * speed * delta_t;
+            if (tecla_W_pressionada)
+                // Movimenta câmera para frente
+                camera_position_c += -w * speed * delta_t;
 
-        if (tecla_W_pressionada)
-            // Movimenta câmera para frente
-            camera_position_c += -w * speed * delta_t;
+            if (tecla_S_pressionada)
+                // Movimenta câmera para esquerda
+                camera_position_c += w * speed * delta_t;
 
-        if (tecla_S_pressionada)
-            // Movimenta câmera para esquerda
-            camera_position_c += w * speed * delta_t;
-
-        if (tecla_A_pressionada)
-            // Movimenta câmera para trás
-            camera_position_c += -u * speed * delta_t;
+            if (tecla_A_pressionada)
+                // Movimenta câmera para trás
+                camera_position_c += -u * speed * delta_t;
+        }
 
         #define SPHERE 0
         #define BUNNY  1
@@ -1261,6 +1269,16 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
             // atualizar o estado da tecla, pois antes de um evento REPEAT
             // necessariamente deve ter ocorrido um evento PRESS.
             ;
+    }
+
+    if (key == GLFW_KEY_F && action == GLFW_PRESS)
+    {
+        free_Camera = true;
+    }
+
+    if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+    {
+        free_Camera = false;
     }
 }
 
