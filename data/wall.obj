@@ -1,0 +1,6 @@
+g the_wall
+v -1 0 1
+v 1 0 1
+v 1 2 1   # Adjusted height to 2 for the wall
+v -1 2 1  # Adjusted height to 2 for the wall
+f 1 2 3 4
