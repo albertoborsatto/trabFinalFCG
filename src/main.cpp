@@ -612,6 +612,17 @@ void RenderScenario(glm::mat4 model) {
 
 /*
 void RenderPistol(glm::mat4 pistol) {
+    pistol = Matrix_Translate(camera_position_c.x+0.05f+camera_view_vector.x, camera_position_c.y-0.22f+camera_view_vector.y, camera_position_c.z-0.2f+camera_view_vector.z)
+              * Matrix_Scale(0.05f, 0.05f, 0.05f)
+              * Matrix_Rotate_Y(3*PI/2.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(pistol));
+    glUniform1i(g_object_id_uniform, PISTOL);
+    DrawVirtualObject("the_pistol");
+}
+*/
+
+/*
+void RenderPistol(glm::mat4 pistol) {
     // Assuming camera_position_c is the camera's position
     glm::mat4 camera_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-camera_position_c));
 
@@ -631,14 +642,28 @@ void RenderPistol(glm::mat4 pistol) {
 }
 */
 
+
 void RenderPistol(glm::mat4 pistol) {
-    pistol = Matrix_Translate(camera_position_c.x+0.05f, camera_position_c.y-0.22f, camera_position_c.z-0.2f)
-              * Matrix_Scale(0.05f, 0.05f, 0.05f)
-              * Matrix_Rotate_Y(3*PI/2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(pistol));
+    // Assuming 'camera_direction' is the camera's direction vector
+    glm::vec3 camera_direction = camera_view_vector;
+
+    glm::vec3 camera_up_vector = camera_up_vector;
+
+    // Extract the rotation matrix from the camera's direction without translation
+    glm::mat4 rotation_matrix = glm::lookAt(glm::vec3(0.0f), camera_direction, camera_up_vector);
+
+    // Create a new model matrix with the rotation, translation, and scale
+    glm::vec3 model_translation = glm::vec3(camera_position_c.x + 0.05f + camera_view_vector.x, camera_position_c.y - 0.22f + camera_view_vector.y, camera_position_c.z - 0.2f + camera_view_vector.z);
+    pistol = glm::translate(glm::mat4(1.0f), model_translation) * glm::scale(glm::mat4(1.0f), glm::vec3(0.05f, 0.05f, 0.05f)) * glm::rotate(rotation_matrix, PI, glm::vec3(4.0f, 3.0f, 2.0f));
+
+    // Send the new model matrix to the shader
+    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(pistol));
+
+    // Set other uniforms and draw the object
     glUniform1i(g_object_id_uniform, PISTOL);
     DrawVirtualObject("the_pistol");
 }
+
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
 // dos objetos na função BuildTrianglesAndAddToVirtualScene().
