@@ -261,7 +261,9 @@ float delta_t;
 float speed;
 float prev_time;
 
-glm::mat4 pistol;
+glm::mat4 pistol = Matrix_Identity();
+
+glm::mat4 map = Matrix_Identity();
 
 int main(int argc, char* argv[])
 {
@@ -542,9 +544,10 @@ int main(int argc, char* argv[])
         DrawVirtualObject("the_bunny");
         */
 
-        //Desenhamos o cenário
-        RenderScenario(model);
+        //Renderiza o mapa
+        RenderScenario(map);
 
+        //Renderiza a pistola
         RenderPistol(pistol);
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
@@ -585,6 +588,13 @@ void RenderScenario(glm::mat4 model) {
     //Desenhamos o modelo do chão
         model = Matrix_Translate(0.0f,-1.0f, 0.0f)
               * Matrix_Scale(2.0f, 1.0f, 2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE);
+        DrawVirtualObject("the_plane");
+
+        model = Matrix_Translate(0.0f, 1.0f, 0.0f)
+              * Matrix_Scale(2.0f, 1.0f, 2.0f)
+              * Matrix_Rotate_Z(PI);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
@@ -657,10 +667,8 @@ void RenderPistol(glm::mat4 pistol) {
     pistol = glm::translate(glm::mat4(1.0f), model_translation) * glm::scale(glm::mat4(1.0f), glm::vec3(0.05f, 0.05f, 0.05f)) * glm::rotate(rotation_matrix, PI, glm::vec3(1.0f, 0.0f, 1.0f));
 
     // Send the new model matrix to the shader
-    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(pistol));
-
-    // Set other uniforms and draw the object
-    glUniform1i(g_object_id_uniform, PISTOL);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(pistol));
+    glUniform1i(g_object_id_uniform, WALL);
     DrawVirtualObject("the_pistol");
 }
 
