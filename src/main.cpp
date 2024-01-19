@@ -654,7 +654,7 @@ void RenderPistol(glm::mat4 pistol) {
 
     // Create a new model matrix with the rotation, translation, and scale
     glm::vec3 model_translation = glm::vec3(camera_position_c.x + 0.05f + camera_view_vector.x, camera_position_c.y - 0.22f + camera_view_vector.y, camera_position_c.z - 0.2f + camera_view_vector.z);
-    pistol = glm::translate(glm::mat4(1.0f), model_translation) * glm::scale(glm::mat4(1.0f), glm::vec3(0.05f, 0.05f, 0.05f)) * glm::rotate(rotation_matrix, PI, glm::vec3(4.0f, 3.0f, 2.0f));
+    pistol = glm::translate(glm::mat4(1.0f), model_translation) * glm::scale(glm::mat4(1.0f), glm::vec3(0.05f, 0.05f, 0.05f)) * glm::rotate(rotation_matrix, PI, glm::vec3(1.0f, 0.0f, 1.0f));
 
     // Send the new model matrix to the shader
     glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(pistol));
