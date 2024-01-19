@@ -48,6 +48,12 @@
 
 #define PI 3.14159265358979323846f
 
+#define SPHERE 0
+#define BUNNY  1
+#define PLANE  2
+#define WALL   3
+#define PISTOL 4
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -518,12 +524,6 @@ int main(int argc, char* argv[])
                 // Movimenta câmera para trás
                 camera_position_c += -u * speed * delta_t;
         }
-
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
-        #define WALL   3
-        #define PISTOL 4
 
         /*
         // Desenhamos o modelo da esfera
