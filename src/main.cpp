@@ -532,13 +532,13 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("the_sphere");
 
-        //Desenhamos o cenário
         RenderScenario(model);
 
+        //Desenhamos parede
+        glBindVertexArray(vertex_array_object_id);
         model = Matrix_Identity();
-
-        glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
-        glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        DrawCube(render_as_black_uniform);
 
         glm::mat4 identity = Matrix_Identity();
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
