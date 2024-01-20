@@ -103,7 +103,7 @@ void main()
         Kd = vec3(0.2,0.2,0.2);
         Ks = vec3(0.3,0.3,0.3);
         Ka = vec3(0.0,0.0,0.0);
-        q = 20.0;
+        q = 30.0;
     }
     else // Objeto desconhecido = preto
     {

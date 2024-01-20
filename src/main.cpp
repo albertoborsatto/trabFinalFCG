@@ -538,6 +538,7 @@ int main(int argc, char* argv[])
         glBindVertexArray(vertex_array_object_id);
         model = Matrix_Identity();
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BUNNY);
         DrawCube(render_as_black_uniform);
 
         glm::mat4 identity = Matrix_Identity();
@@ -630,7 +631,7 @@ void RenderScenario(glm::mat4 model) {
 void RenderPistol(glm::mat4 pistol) {
     pistol = Matrix_Translate(0.2,-0.4,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(pistol));
-    glUniform1i(g_object_id_uniform, PISTOL);
+    glUniform1i(g_object_id_uniform, SPHERE);
     DrawVirtualObject("the_pistol");
 }
 
