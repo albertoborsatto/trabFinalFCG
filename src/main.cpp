@@ -48,6 +48,12 @@
 
 #define PI 3.14159265358979323846f
 
+#define SPHERE 0
+#define BUNNY  1
+#define PLANE  2
+#define WALL   3
+#define PISTOL 4
+
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
 struct ObjModel
@@ -519,19 +525,12 @@ int main(int argc, char* argv[])
                 camera_position_c += -u * speed * delta_t;
         }
 
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
-        #define WALL   3
-        #define PISTOL 4
-
         // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,-1.93f)
+        model = Matrix_Translate(-1.0f, 0.2f,-1.93f)
         * Matrix_Scale(0.1f, 0.1f, 0.1f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("the_sphere");
-
 
         //Desenhamos o cenário
         RenderScenario(model);
@@ -582,31 +581,50 @@ int main(int argc, char* argv[])
 void RenderScenario(glm::mat4 model) {
 
     //Desenhamos o modelo do chão
-        model = Matrix_Translate(0.0f,-1.0f, 0.0f)
-              * Matrix_Scale(2.0f, 1.0f, 2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, PLANE);
-        DrawVirtualObject("the_plane");
+    model = Matrix_Translate(0.0f,-1.0f, 0.0f)
+          * Matrix_Scale(2.0f, 1.0f, 2.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, PLANE);
+    DrawVirtualObject("the_plane");
 
-        model = Matrix_Translate(0.0f, -1.0f, -4.0f)
-              * Matrix_Scale(2.0f, 1.0f, 2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, WALL);
-        DrawVirtualObject("the_wall");
+    model = Matrix_Translate(0.0f, 1.0f, 0.0f)
+          * Matrix_Scale(2.0f, 1.0f, 2.0f)
+          * Matrix_Rotate_Z(PI);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, PLANE);
+    DrawVirtualObject("the_plane");
 
-        model = Matrix_Translate(4.0f, -1.0f, 0.0f)
-              * Matrix_Scale(2.0f, 1.0f, 2.0f)
-              * Matrix_Rotate_Y(3.0f*PI/2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, WALL);
-        DrawVirtualObject("the_wall");
+    model = Matrix_Translate(0.0f, -1.0f, -4.0f)
+          * Matrix_Scale(2.0f, 1.0f, 2.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("the_wall");
 
-        model = Matrix_Translate(-4.0f, -1.0f, 0.0f)
-              * Matrix_Scale(2.0f, 1.0f, 2.0f)
-              * Matrix_Rotate_Y(PI/2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, WALL);
-        DrawVirtualObject("the_wall");
+    model = Matrix_Translate(4.0f, -1.0f, 0.0f)
+          * Matrix_Scale(2.0f, 1.0f, 2.0f)
+          * Matrix_Rotate_Y(3.0f*PI/2.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("the_wall");
+
+    model = Matrix_Translate(-4.0f, -1.0f, 0.0f)
+          * Matrix_Scale(2.0f, 1.0f, 2.0f)
+          * Matrix_Rotate_Y(PI/2.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("the_wall");
+
+    model = Matrix_Translate(0.0f, -1.0f, -3.0f)
+          * Matrix_Scale(2.0f, 0.5f, 2.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("the_wall");
+
+    model = Matrix_Translate(0.0f, 0.0f, -1.5f)
+          * Matrix_Scale(2.0f, 1.0f, 0.5f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, PLANE);
+    DrawVirtualObject("the_plane");
 }
 
 void RenderPistol(glm::mat4 pistol) {
