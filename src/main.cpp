@@ -419,6 +419,10 @@ int main(int argc, char* argv[])
     GLint projection_uniform      = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     GLint render_as_black_uniform = glGetUniformLocation(g_GpuProgramID, "render_as_black"); // Variável booleana em shader_vertex.glsl
 
+    /* int walls_positions[20][20] = {3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
+                                   3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+                                   3}; */
+    
     while (!glfwWindowShouldClose(window))
     {
         float current_time = (float)glfwGetTime();
@@ -459,7 +463,7 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -30.0f; // Posição do "far plane"
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -523,22 +527,49 @@ int main(int argc, char* argv[])
                 camera_position_c += -u * speed * delta_t;
         }
 
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f, 0.2f,-1.93f)
-        * Matrix_Scale(0.1f, 0.1f, 0.1f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, M4A1);
-        DrawVirtualObject("the_m4a1");
-
-        RenderScenario(model);
+        //RenderScenario(model);
 
         //Desenhamos parede
         glBindVertexArray(vertex_array_object_id);
         model = Matrix_Identity();
+        model = model * Matrix_Scale(20.0f, 1.0f, 0.01f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawCube(render_as_black_uniform);
 
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(10.0f, 0.0f, 10.0f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BUNNY);
+        DrawCube(render_as_black_uniform);
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(0.0f, 0.0f, 20.0f) * Matrix_Scale(20.0f, 1.0f, 0.01f);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BUNNY);
+        DrawCube(render_as_black_uniform);
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-10.0f, 0.0f, 10.0f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BUNNY);
+        DrawCube(render_as_black_uniform);
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(0.0f, -0.5f, 10.0f) * Matrix_Scale(20.0f, 0.01f, 20.0f);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BUNNY);
+        DrawCube(render_as_black_uniform);
+
+        
+
+        /* glBindVertexArray(vertex_array_object_id);
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(10.0f, 0.0f, 0.5f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BUNNY);
+        DrawCube(render_as_black_uniform); */
+        
         glm::mat4 identity = Matrix_Identity();
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
 
@@ -2014,7 +2045,6 @@ GLuint BuildTriangles()
     // os triângulos definidos acima. Veja a chamada glDrawElements() em main().
     return vertex_array_object_id;
 }
-
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
