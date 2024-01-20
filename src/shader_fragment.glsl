@@ -18,6 +18,7 @@ uniform mat4 projection;
 #define PLANE  2
 #define WALL   3
 #define PISTOL 4
+#define M4A1   5
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -104,6 +105,15 @@ void main()
         Ks = vec3(0.3,0.3,0.3);
         Ka = vec3(0.0,0.0,0.0);
         q = 30.0;
+    }
+    else if ( object_id == M4A1 )
+    {
+        // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
     }
     else // Objeto desconhecido = preto
     {

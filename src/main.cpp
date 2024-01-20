@@ -54,6 +54,7 @@
 #define PLANE  2
 #define WALL   3
 #define PISTOL 4
+#define M4A1   5
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -163,7 +164,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 void DrawCube(GLint render_as_black_uniform); // Desenha um cubo
 
 void RenderScenario(glm::mat4 model);
-void RenderPistol(glm::mat4 pistol);
+void RenderWeapon(glm::mat4 pistol);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -238,6 +239,7 @@ bool tecla_A_pressionada = false;
 bool tecla_S_pressionada = false;
 bool tecla_D_pressionada = false;
 bool free_Camera = true;
+bool pistol_Current = false;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
@@ -267,8 +269,6 @@ glm::vec4 camera_up_vector;
 float delta_t;
 float speed;
 float prev_time;
-
-glm::mat4 pistol;
 
 int main(int argc, char* argv[])
 {
@@ -366,6 +366,10 @@ int main(int argc, char* argv[])
     ObjModel pistolmodel("../../data/pistol.obj");
     ComputeNormals(&pistolmodel);
     BuildTrianglesAndAddToVirtualScene(&pistolmodel);
+
+    ObjModel m4a1model("../../data/m4a1.obj");
+    ComputeNormals(&m4a1model);
+    BuildTrianglesAndAddToVirtualScene(&m4a1model);
 
     if ( argc > 1 )
     {
@@ -523,8 +527,8 @@ int main(int argc, char* argv[])
         model = Matrix_Translate(-1.0f, 0.2f,-1.93f)
         * Matrix_Scale(0.1f, 0.1f, 0.1f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_sphere");
+        glUniform1i(g_object_id_uniform, M4A1);
+        DrawVirtualObject("the_m4a1");
 
         RenderScenario(model);
 
@@ -538,7 +542,7 @@ int main(int argc, char* argv[])
         glm::mat4 identity = Matrix_Identity();
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
 
-        RenderPistol(model);
+        RenderWeapon(model);
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -622,11 +626,18 @@ void RenderScenario(glm::mat4 model) {
     DrawVirtualObject("the_plane");
 }
 
-void RenderPistol(glm::mat4 pistol) {
-    pistol = Matrix_Translate(0.2,-0.4,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(pistol));
-    glUniform1i(g_object_id_uniform, SPHERE);
-    DrawVirtualObject("the_pistol");
+void RenderWeapon(glm::mat4 weapon) {
+    if(pistol_Current){
+        weapon = Matrix_Translate(0.2,-0.45,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_pistol");
+    } else {
+        weapon = Matrix_Translate(0.15,-0.3,-0.5) * Matrix_Scale(0.15f, 0.15f, 0.15f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_m4a1");
+    }
 }
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
@@ -1378,12 +1389,15 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
 
     if (key == GLFW_KEY_F && action == GLFW_PRESS)
     {
-        free_Camera = true;
+        free_Camera = !free_Camera;
     }
-
-    if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
-        free_Camera = false;
+        pistol_Current = false;
+    }
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+    {
+        pistol_Current = true;
     }
 }
 
