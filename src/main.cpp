@@ -525,7 +525,6 @@ int main(int argc, char* argv[])
         #define WALL   3
         #define PISTOL 4
 
-        
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,-1.93f)
         * Matrix_Scale(0.1f, 0.1f, 0.1f);
@@ -533,20 +532,19 @@ int main(int argc, char* argv[])
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("the_sphere");
 
-        /* // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(g_AngleZ)
-              * Matrix_Rotate_Y(g_AngleY)
-              * Matrix_Rotate_X(g_AngleX);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("the_bunny"); */
-        
 
         //Desenhamos o cenário
         RenderScenario(model);
 
-        RenderPistol(pistol);
+        model = Matrix_Identity();
+
+        glUniformMatrix4fv(g_view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
+        glUniformMatrix4fv(g_projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
+
+        glm::mat4 identity = Matrix_Identity();
+        glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
+
+        RenderPistol(model);
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -611,31 +609,8 @@ void RenderScenario(glm::mat4 model) {
         DrawVirtualObject("the_wall");
 }
 
-/*
 void RenderPistol(glm::mat4 pistol) {
-    // Assuming camera_position_c is the camera's position
-    glm::mat4 camera_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(-camera_position_c));
-
-    // Assuming camera_orientation_c is the camera's orientation
-    // (you might need to adjust this based on how your camera system works)
-    glm::mat4 view_matrix = glm::lookAt(glm::vec3(camera_position_c), glm::vec3(camera_position_c + camera_view_vector), glm::vec3(0, 1, 0));
-
-    // Assuming pistol_model is the pistol's model matrix
-    pistol = Matrix_Translate(camera_position_c.x, camera_position_c.y, camera_position_c.z) * Matrix_Scale(1.0f, 1.0f, 1.0f);
-
-    // Combine the camera and pistol transformations
-    glm::mat4 combined_model = view_matrix * pistol;
-
-    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(combined_model));
-    glUniform1i(g_object_id_uniform, PISTOL);
-    DrawVirtualObject("the_pistol");
-}
-*/
-
-void RenderPistol(glm::mat4 pistol) {
-    pistol = Matrix_Translate(camera_position_c.x+0.05f, camera_position_c.y-0.22f, camera_position_c.z-0.2f)
-              * Matrix_Scale(0.05f, 0.05f, 0.05f)
-              * Matrix_Rotate_Y(3*PI/2.0f);
+    pistol = Matrix_Translate(0.2,-0.4,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(pistol));
     glUniform1i(g_object_id_uniform, PISTOL);
     DrawVirtualObject("the_pistol");
