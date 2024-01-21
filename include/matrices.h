@@ -221,7 +221,62 @@ float dotproduct(glm::vec4 u, glm::vec4 v)
 }
 
 // Matriz de mudança de coordenadas para o sistema de coordenadas da Câmera.
-glm::mat4 Matrix_Camera_View(glm::vec4 position_c, glm::vec4 view_vector, glm::vec4 up_vector)
+glm::mat4 Matrix_Camera_View(glm::vec4* position_c, glm::vec4 view_vector, glm::vec4 up_vector, bool frente, bool tras, bool direita, bool esquerda, float speed, bool noclip, float passo)
+{ 
+    glm::vec4 w = -view_vector;
+    glm::vec4 u = crossproduct(up_vector, w);
+
+    // Normalizamos os vetores u e w
+    w = w / norm(w);
+    u = u / norm(u);
+
+    glm::vec4 v = crossproduct(w,u);
+
+    glm::vec4 origin_o = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+    float ux = u.x;
+    float uy = u.y;
+    float uz = u.z;
+    float vx = v.x;
+    float vy = v.y;
+    float vz = v.z;
+    float wx = w.x;
+    float wy = w.y;
+    float wz = w.z;
+
+    if(!noclip)
+    {
+        w.y = 0;
+        u.y = 0;
+    }
+
+    if(frente)
+    {
+        *position_c += (-w * (speed * passo));
+    }
+    if(tras)
+    {
+        *position_c -= (-w * (speed * passo));
+    }
+
+    if(direita)
+    {
+        *position_c += (u * (speed * passo));
+    }
+    if(esquerda)
+    {
+        *position_c -= (u * (speed * passo));
+    }
+
+    return Matrix(
+        ux   , uy   , uz   , -dotproduct(u , *position_c - origin_o) ,
+        vx   , vy   , vz   , -dotproduct(v , *position_c - origin_o) ,
+        wx   , wy   , wz   , -dotproduct(w , *position_c - origin_o) ,
+        0.0f , 0.0f , 0.0f , 1.0f
+    );
+}
+
+glm::mat4 Matrix_Camera_View_Look_At(glm::vec4 position_c, glm::vec4 view_vector, glm::vec4 up_vector)
 {
     glm::vec4 w = -view_vector;
     glm::vec4 u = crossproduct(up_vector, w);
@@ -251,6 +306,7 @@ glm::mat4 Matrix_Camera_View(glm::vec4 position_c, glm::vec4 view_vector, glm::v
         0.0f , 0.0f , 0.0f , 1.0f
     );
 }
+
 
 // Matriz de projeção paralela ortográfica
 glm::mat4 Matrix_Orthographic(float l, float r, float b, float t, float n, float f)
