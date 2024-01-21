@@ -256,6 +256,8 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+GLint g_camera_position_c_uniform;
+GLint g_camera_view_vector_uniform;
 
 // Computamos a posição da câmera utilizando coordenadas esféricas.  As
 // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
@@ -497,6 +499,8 @@ int main(int argc, char* argv[])
         passo = agora - previo;
 
         previo = agora;
+        glUniform4fv(g_camera_position_c_uniform, 1, glm::value_ptr(camera_position_c));
+        glUniform4fv(g_camera_view_vector_uniform, 1, glm::value_ptr(camera_view_vector));
 
         if(free_Camera == false){
             r = g_CameraDistance;
@@ -512,9 +516,9 @@ int main(int argc, char* argv[])
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
             view = Matrix_Camera_View_Look_At(camera_position_c, camera_view_vector, camera_up_vector);
+            
         } else {
             view = Matrix_Camera_View(&camera_position_c, camera_view_vector, camera_up_vector, frente, tras, direita, esquerda, speed, noclip, passo);
-
         }
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
@@ -1081,6 +1085,8 @@ void LoadShadersFromFiles()
     g_view_uniform       = glGetUniformLocation(g_GpuProgramID, "view"); // Variável da matriz "view" em shader_vertex.glsl
     g_projection_uniform = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
+    g_camera_position_c_uniform = glGetUniformLocation(g_GpuProgramID, "camera_position_c");
+    g_camera_view_vector_uniform = glGetUniformLocation(g_GpuProgramID, "camera_view_vector");
 }
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha

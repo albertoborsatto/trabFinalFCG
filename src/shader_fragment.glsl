@@ -11,6 +11,8 @@ in vec4 normal;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+uniform vec4 camera_view_vector;
+uniform vec4 camera_position_c;
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define SPHERE 0
@@ -33,10 +35,15 @@ out vec4 color;
 
 void main()
 {
+
     // Obtemos a posição da câmera utilizando a inversa da matriz que define o
     // sistema de coordenadas da câmera.
     vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
     vec4 camera_position = inverse(view) * origin;
+
+    vec4 posicao_spotlight = camera_position_c;
+    vec4 vetor_spotlight = camera_view_vector;
+    float angulo_spotlight = 3.1415926538/6;
 
     // O fragmento atual é coberto por um ponto que percente à superfície de um
     // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
@@ -50,7 +57,7 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.5,0.0));
+    vec4 l = normalize(posicao_spotlight - p);
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
@@ -217,9 +224,15 @@ void main()
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso,
     // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
-    color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+    if(dot(normalize(p-posicao_spotlight), normalize(vetor_spotlight)) < cos(angulo_spotlight)) {
+        color.rgb = ambient_term;
+    } else {
+        color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
+    }
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
 }
+
+
