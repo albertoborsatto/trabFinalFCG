@@ -55,6 +55,13 @@
 #define WALL   3
 #define PISTOL 4
 #define M4A1   5
+#define CONTAINER 6
+#define CAR 7
+#define OPENEDCONTAINER 8
+#define CLOSEDCONTAINER 8
+#define BARREL 9
+#define PALLET 10
+#define TRASH 11
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -371,6 +378,34 @@ int main(int argc, char* argv[])
     ComputeNormals(&m4a1model);
     BuildTrianglesAndAddToVirtualScene(&m4a1model);
 
+    ObjModel containermodel("../../data/container.obj");
+    ComputeNormals(&containermodel);
+    BuildTrianglesAndAddToVirtualScene(&containermodel);
+
+    ObjModel carmodel("../../data/Rusted Car.obj");
+    ComputeNormals(&carmodel);
+    BuildTrianglesAndAddToVirtualScene(&carmodel);
+
+    ObjModel openedcontainermodel("../../data/Container20-4DoorsShell.obj");
+    ComputeNormals(&openedcontainermodel);
+    BuildTrianglesAndAddToVirtualScene(&openedcontainermodel);
+
+    ObjModel closedcontainermodel("../../data/Container20-2Doors.obj");
+    ComputeNormals(&closedcontainermodel);
+    BuildTrianglesAndAddToVirtualScene(&closedcontainermodel);
+
+    ObjModel barrelmodel("../../data/Drum.obj");
+    ComputeNormals(&barrelmodel);
+    BuildTrianglesAndAddToVirtualScene(&barrelmodel);
+
+    ObjModel palletmodel("../../data/LP_Pallets.obj");
+    ComputeNormals(&palletmodel);
+    BuildTrianglesAndAddToVirtualScene(&palletmodel);
+
+    ObjModel trashmodel("../../data/Garbage_Container_.obj");
+    ComputeNormals(&trashmodel);
+    BuildTrianglesAndAddToVirtualScene(&trashmodel);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -409,7 +444,7 @@ int main(int argc, char* argv[])
         //GLint model_uniform           = glGetUniformLocation(g_GpuProgramID, "model"); // Variável da matriz "model"
         //GLint render_as_black_uniform = glGetUniformLocation(g_GpuProgramID, "render_as_black"); // Variável booleana em shader_vertex.glsl
         delta_t;
-        speed = 2.0f;
+        speed = 10.0f;
         prev_time = (float)glfwGetTime();
         // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     }
@@ -558,10 +593,307 @@ int main(int argc, char* argv[])
         model = Matrix_Identity();
         model = model * Matrix_Translate(0.0f, -0.5f, 10.0f) * Matrix_Scale(20.0f, 0.01f, 20.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
+        glUniform1i(g_object_id_uniform, PLANE);
         DrawCube(render_as_black_uniform);
 
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(5.0f, -1.9f, 22.5f) * Matrix_Scale(0.7f, 0.7f, 0.7f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_container");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(5.0f, -1.9f, 20.00f) * Matrix_Scale(0.7f, 0.7f, 0.7f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_container");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(5.0f, -0.50f, 21.3f) * Matrix_Scale(0.7f, 0.7f, 0.7f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_container");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(6.0f, -0.5f, 4.5f) * Matrix_Rotate_Y(-(PI/4.0f)) * Matrix_Scale(0.15f, 0.15f, 0.15f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_car");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-8.7f, -0.5f, 8.0f) * Matrix_Rotate_Y(-(PI/2)) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-10.0f, -0.5f, 8.0f) * Matrix_Rotate_Y(-(PI/2)) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-2.3f, -0.5f, 2.7f) * Matrix_Scale(0.005f, 0.005f, 0.005f) * Matrix_Rotate_Y(PI/64);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-2.3f, -0.5f, 1.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, -0.5f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, -0.5f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, -0.5f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, -0.5f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, 0.8f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, 0.8f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, -0.5f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, -0.5f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, -0.5f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, -0.5f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, 0.8f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, 0.8f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
         
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-7.0f, -0.5f, 17.0f) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("default");
+        DrawVirtualObject("polySurface38");
+        DrawVirtualObject("polySurface39");
+        DrawVirtualObject("polySurface37");
+    
+        model = Matrix_Identity();
+        model = Matrix_Translate(7.0f, -0.5f, 17.0f) * Matrix_Rotate_Y(-(PI/4)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("Cube");
+
+        model = Matrix_Identity();
+        model = Matrix_Translate(5.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("Cube");
+        model = Matrix_Identity();
+        model = Matrix_Translate(4.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("Cube");
+        
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-7.0f, -0.5f, 15.0f) * Matrix_Rotate_Y(PI/4) * Matrix_Scale(0.4f, 0.4f, 0.4f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("Cylinder.002_Cylinder.023");
+        DrawVirtualObject("Cylinder.003_Cylinder.024");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-6.5f, -0.5f, 3.0f) * Matrix_Rotate_Y(-PI/4) * Matrix_Scale(0.4f, 0.4f, 0.4f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("Cylinder.011_Cylinder.012");
+        DrawVirtualObject("Cylinder_Cylinder.016");
+        DrawVirtualObject("Cylinder.002_Cylinder.023");
+        DrawVirtualObject("Cylinder.003_Cylinder.024");     
 
         /* glBindVertexArray(vertex_array_object_id);
         model = Matrix_Identity();
@@ -574,6 +906,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
 
         RenderWeapon(model);
+        
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.

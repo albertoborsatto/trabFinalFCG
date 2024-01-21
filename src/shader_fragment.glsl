@@ -19,6 +19,12 @@ uniform mat4 projection;
 #define WALL   3
 #define PISTOL 4
 #define M4A1   5
+#define CONTAINER 6
+#define CAR 7
+#define OPENEDCONTAINER 8
+#define BARREL 9
+#define PALLET 10
+#define TRASH 11
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -109,6 +115,54 @@ void main()
     else if ( object_id == M4A1 )
     {
         // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
+    }
+    else if( object_id == CONTAINER ) {
+        // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
+    }
+    else if( object_id == CAR ) {
+        // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
+    }
+    else if( object_id == OPENEDCONTAINER) {
+         // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
+    }
+    else if( object_id == BARREL) {
+         // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
+    }
+    else if( object_id == PALLET ) {
+         // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
+    }
+    else if( object_id == TRASH ) {
+         // PREENCHA AQUI
         // Propriedades espectrais do plano
         Kd = vec3(0.0,0.0,0.0);
         Ks = vec3(0.0,0.0,0.0);
