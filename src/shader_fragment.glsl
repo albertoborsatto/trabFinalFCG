@@ -25,6 +25,7 @@ uniform mat4 projection;
 #define BARREL 9
 #define PALLET 10
 #define TRASH 11
+#define FERRARI 12
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -162,6 +163,14 @@ void main()
         q = 1.0;
     }
     else if( object_id == TRASH ) {
+         // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
+    }
+    else if( object_id == FERRARI ) {
          // PREENCHA AQUI
         // Propriedades espectrais do plano
         Kd = vec3(0.0,0.0,0.0);

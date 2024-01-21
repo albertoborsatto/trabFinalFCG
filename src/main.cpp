@@ -62,6 +62,7 @@
 #define BARREL 9
 #define PALLET 10
 #define TRASH 11
+#define FERRARI 12
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -223,7 +224,7 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
 // renderização.
-float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
+float g_CameraTheta = PI/2; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 3.5f; // Distância da câmera para a origem
 
@@ -241,11 +242,12 @@ bool g_UsePerspectiveProjection = true;
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
 
-bool tecla_W_pressionada = false;
-bool tecla_A_pressionada = false;
-bool tecla_S_pressionada = false;
-bool tecla_D_pressionada = false;
+bool frente = false;
+bool direita = false;
+bool tras = false;
+bool esquerda = false;
 bool free_Camera = true;
+bool noclip = false;
 bool pistol_Current = false;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
@@ -406,6 +408,10 @@ int main(int argc, char* argv[])
     ComputeNormals(&trashmodel);
     BuildTrianglesAndAddToVirtualScene(&trashmodel);
 
+    ObjModel ferrarimodel("../../data/Car.obj");
+    ComputeNormals(&ferrarimodel);
+    BuildTrianglesAndAddToVirtualScene(&ferrarimodel);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
@@ -423,6 +429,10 @@ int main(int argc, char* argv[])
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
 
+    float agora;
+    float previo = glfwGetTime();
+    float passo;
+
     if (free_Camera==true)
     {
         // Computamos a posição da câmera utilizando coordenadas esféricas.  As
@@ -436,7 +446,7 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+        camera_position_c  = glm::vec4(8.6f, 0.38f, 9.8f, 1.0f); // Ponto "c", centro da câmera
         camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
@@ -444,7 +454,7 @@ int main(int argc, char* argv[])
         //GLint model_uniform           = glGetUniformLocation(g_GpuProgramID, "model"); // Variável da matriz "model"
         //GLint render_as_black_uniform = glGetUniformLocation(g_GpuProgramID, "render_as_black"); // Variável booleana em shader_vertex.glsl
         delta_t;
-        speed = 10.0f;
+        speed = 3.0f;
         prev_time = (float)glfwGetTime();
         // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     }
@@ -481,6 +491,13 @@ int main(int argc, char* argv[])
         // os shaders de vértice e fragmentos).
         glUseProgram(g_GpuProgramID);
 
+        glm::mat4 view;
+
+        agora = glfwGetTime();
+        passo = agora - previo;
+
+        previo = agora;
+
         if(free_Camera == false){
             r = g_CameraDistance;
             y = r*sin(g_CameraPhi);
@@ -493,6 +510,11 @@ int main(int argc, char* argv[])
             camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+            view = Matrix_Camera_View_Look_At(camera_position_c, camera_view_vector, camera_up_vector);
+        } else {
+            view = Matrix_Camera_View(&camera_position_c, camera_view_vector, camera_up_vector, frente, tras, direita, esquerda, speed, noclip, passo);
+
         }
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
@@ -502,7 +524,6 @@ int main(int argc, char* argv[])
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
@@ -544,22 +565,6 @@ int main(int argc, char* argv[])
             z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
             x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
             camera_view_vector = glm::vec4(-x,-y,-z,0.0f);
-
-            if (tecla_D_pressionada)
-                // Movimenta câmera para direita
-                camera_position_c += u * speed * delta_t;
-
-            if (tecla_W_pressionada)
-                // Movimenta câmera para frente
-                camera_position_c += -w * speed * delta_t;
-
-            if (tecla_S_pressionada)
-                // Movimenta câmera para esquerda
-                camera_position_c += w * speed * delta_t;
-
-            if (tecla_A_pressionada)
-                // Movimenta câmera para trás
-                camera_position_c += -u * speed * delta_t;
         }
 
         //RenderScenario(model);
@@ -615,7 +620,7 @@ int main(int argc, char* argv[])
         DrawVirtualObject("the_container");
 
         model = Matrix_Identity();
-        model = model * Matrix_Translate(6.0f, -0.5f, 4.5f) * Matrix_Rotate_Y(-(PI/4.0f)) * Matrix_Scale(0.15f, 0.15f, 0.15f);
+        model = model * Matrix_Translate(6.0f, -0.5f, 4.5f) * Matrix_Rotate_Y(-(PI/4.0f)) * Matrix_Scale(0.2f, 0.2f, 0.2f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("the_car");
@@ -863,7 +868,7 @@ int main(int argc, char* argv[])
         DrawVirtualObject("polySurface37");
     
         model = Matrix_Identity();
-        model = Matrix_Translate(7.0f, -0.5f, 17.0f) * Matrix_Rotate_Y(-(PI/4)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        model = Matrix_Translate(7.0f, -0.5f, 18.5f) * Matrix_Rotate_Y(-(PI/4)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("Cube");
@@ -887,6 +892,12 @@ int main(int argc, char* argv[])
         DrawVirtualObject("Cylinder.003_Cylinder.024");
 
         model = Matrix_Identity();
+        model = Matrix_Translate(7.0f, -0.5f, 16.5f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.7f, 0.7f, 0.7f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("Car_Cube");
+
+        model = Matrix_Identity();
         model = model * Matrix_Translate(-6.5f, -0.5f, 3.0f) * Matrix_Rotate_Y(-PI/4) * Matrix_Scale(0.4f, 0.4f, 0.4f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, SPHERE);
@@ -901,7 +912,7 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawCube(render_as_black_uniform); */
-        
+
         glm::mat4 identity = Matrix_Identity();
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
 
@@ -1679,76 +1690,40 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fflush(stdout);
     }
 
-    if (key == GLFW_KEY_D)
+    if (key == GLFW_KEY_W && action == GLFW_PRESS)
     {
-        if (action == GLFW_PRESS)
-            // Usuário apertou a tecla D, então atualizamos o estado para pressionada
-            tecla_D_pressionada = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
-            tecla_D_pressionada = false;
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla D e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+        frente = true;
+    }
+    if (key == GLFW_KEY_W && action == GLFW_RELEASE)
+    {
+        frente = false;
     }
 
-    if (key == GLFW_KEY_A)
+    if (key == GLFW_KEY_S && action == GLFW_PRESS)
     {
-        if (action == GLFW_PRESS)
-            // Usuário apertou a tecla A, então atualizamos o estado para pressionada
-            tecla_A_pressionada = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla A, então atualizamos o estado para NÃO pressionada
-            tecla_A_pressionada = false;
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla A e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+        tras = true;
+    }
+    if (key == GLFW_KEY_S && action == GLFW_RELEASE)
+    {
+        tras = false;
     }
 
-    if (key == GLFW_KEY_W)
+    if (key == GLFW_KEY_D && action == GLFW_PRESS)
     {
-        if (action == GLFW_PRESS)
-            // Usuário apertou a tecla W, então atualizamos o estado para pressionada
-            tecla_W_pressionada = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla W, então atualizamos o estado para NÃO pressionada
-            tecla_W_pressionada = false;
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla W e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+        direita = true;
+    }
+    if (key == GLFW_KEY_D && action == GLFW_RELEASE)
+    {
+        direita = false;
     }
 
-    if (key == GLFW_KEY_S)
+    if (key == GLFW_KEY_A && action == GLFW_PRESS)
     {
-        if (action == GLFW_PRESS)
-            // Usuário apertou a tecla S, então atualizamos o estado para pressionada
-            tecla_S_pressionada = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla S, então atualizamos o estado para NÃO pressionada
-            tecla_S_pressionada = false;
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla S e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+        esquerda = true;
+    }
+    if (key == GLFW_KEY_A && action == GLFW_RELEASE)
+    {
+        esquerda = false;
     }
 
     if (key == GLFW_KEY_F && action == GLFW_PRESS)
@@ -1762,6 +1737,10 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_2 && action == GLFW_PRESS)
     {
         pistol_Current = true;
+    }
+    if (key == GLFW_KEY_V && action == GLFW_PRESS)
+    {
+        noclip = (noclip == false) ? true : false;
     }
 }
 
@@ -2095,23 +2074,6 @@ void DrawCube(GLint render_as_black_uniform)
 
     // Pedimos para OpenGL desenhar linhas com largura de 4 pixels.
     glLineWidth(4.0f);
-
-    // Pedimos para a GPU rasterizar os vértices dos eixos XYZ
-    // apontados pelo VAO como linhas. Veja a definição de
-    // g_VirtualScene["axes"] dentro da função BuildTriangles(), e veja
-    // a documentação da função glDrawElements() em
-    // http://docs.gl/gl3/glDrawElements.
-    //
-    // Importante: estes eixos serão desenhamos com a matriz "model"
-    // definida acima, e portanto sofrerão as mesmas transformações
-    // geométricas que o cubo. Isto é, estes eixos estarão
-    // representando o sistema de coordenadas do modelo (e não o global)!
-    glDrawElements(
-        g_VirtualScene["axes"].rendering_mode,
-        g_VirtualScene["axes"].num_indices,
-        GL_UNSIGNED_INT,
-        (void*)g_VirtualScene["axes"].first_index
-    );
 
     // Informamos para a placa de vídeo (GPU) que a variável booleana
     // "render_as_black" deve ser colocada como "true". Veja o arquivo
