@@ -249,6 +249,7 @@ bool esquerda = false;
 bool free_Camera = true;
 bool noclip = false;
 bool pistol_Current = false;
+int flashlight_On = 0;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
@@ -258,6 +259,7 @@ GLint g_projection_uniform;
 GLint g_object_id_uniform;
 GLint g_camera_position_c_uniform;
 GLint g_camera_view_vector_uniform;
+GLint g_flashlightOn;
 
 // Computamos a posição da câmera utilizando coordenadas esféricas.  As
 // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
@@ -499,8 +501,10 @@ int main(int argc, char* argv[])
         passo = agora - previo;
 
         previo = agora;
+
         glUniform4fv(g_camera_position_c_uniform, 1, glm::value_ptr(camera_position_c));
         glUniform4fv(g_camera_view_vector_uniform, 1, glm::value_ptr(camera_view_vector));
+        glUniform1i(g_flashlightOn, flashlight_On);
 
         if(free_Camera == false){
             r = g_CameraDistance;
@@ -516,7 +520,6 @@ int main(int argc, char* argv[])
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
             view = Matrix_Camera_View_Look_At(camera_position_c, camera_view_vector, camera_up_vector);
-            
         } else {
             view = Matrix_Camera_View(&camera_position_c, camera_view_vector, camera_up_vector, frente, tras, direita, esquerda, speed, noclip, passo);
         }
@@ -921,7 +924,6 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
 
         RenderWeapon(model);
-        
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -1057,7 +1059,7 @@ void LoadShadersFromFiles()
     //    + FCG_Lab_01/
     //    |
     //    +--+ bin/
-    //    |  |
+    //    |  |glsl
     //    |  +--+ Release/  (ou Debug/ ou Linux/)
     //    |     |
     //    |     o-- main.exe
@@ -1087,6 +1089,7 @@ void LoadShadersFromFiles()
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
     g_camera_position_c_uniform = glGetUniformLocation(g_GpuProgramID, "camera_position_c");
     g_camera_view_vector_uniform = glGetUniformLocation(g_GpuProgramID, "camera_view_vector");
+    g_flashlightOn = glGetUniformLocation(g_GpuProgramID, "flashlightOn");
 }
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha
@@ -1746,7 +1749,15 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     }
     if (key == GLFW_KEY_V && action == GLFW_PRESS)
     {
-        noclip = (noclip == false) ? true : false;
+        noclip = !noclip;
+    }
+    if (key == GLFW_KEY_E && action == GLFW_PRESS)
+    {
+        if(flashlight_On==1){
+            flashlight_On=0;
+        } else {
+            flashlight_On=1;
+        }
     }
 }
 

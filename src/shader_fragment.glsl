@@ -13,6 +13,7 @@ uniform mat4 view;
 uniform mat4 projection;
 uniform vec4 camera_view_vector;
 uniform vec4 camera_position_c;
+uniform int flashlightOn;
 
 // Identificador que define qual objeto está sendo desenhado no momento
 #define SPHERE 0
@@ -224,8 +225,8 @@ void main()
 
     // Cor final do fragmento calculada com uma combinação dos termos difuso,
     // especular, e ambiente. Veja slide 129 do documento Aula_17_e_18_Modelos_de_Iluminacao.pdf.
-    if(dot(normalize(p-posicao_spotlight), normalize(vetor_spotlight)) < cos(angulo_spotlight)) {
-        color.rgb = ambient_term;
+    if(dot(normalize(p-posicao_spotlight), normalize(vetor_spotlight)) < cos(angulo_spotlight) && flashlightOn==1) {
+            color.rgb = ambient_term;
     } else {
         color.rgb = lambert_diffuse_term + ambient_term + phong_specular_term;
     }
