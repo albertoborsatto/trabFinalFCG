@@ -287,7 +287,7 @@ glm::mat4 Matrix_Camera_View_lookAt(glm::vec4 position_c, glm::vec4 view_vector,
 
     glm::vec4 v = crossproduct(w,u);
 
-    glm::vec4 origin_o = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    glm::vec4 origin_o = glm::vec4(-0.13f, 0.38f, -10.0f, 1.0f);
 
     float ux = u.x;
     float uy = u.y;

@@ -246,6 +246,7 @@ bool frente = false;
 bool direita = false;
 bool tras = false;
 bool esquerda = false;
+bool show_weapon = true;
 bool free_Camera = true;
 bool noclip = false;
 bool pistol_Current = false;
@@ -507,7 +508,7 @@ int main(int argc, char* argv[])
         glUniform1i(g_flashlightOn, flashlight_On);
 
         if(free_Camera == false){
-            r = g_CameraDistance;
+            r = 20.0f;
             y = r*sin(g_CameraPhi);
             z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
             x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
@@ -523,6 +524,7 @@ int main(int argc, char* argv[])
         } else {
             view = Matrix_Camera_View(&camera_position_c, camera_view_vector, camera_up_vector, frente, tras, direita, esquerda, speed, noclip, passo);
         }
+
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
@@ -963,16 +965,18 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
 }
 
 void RenderWeapon(glm::mat4 weapon) {
-    if(pistol_Current){
-        weapon = Matrix_Translate(0.2,-0.45,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_pistol");
+    if(show_weapon) {
+        if(pistol_Current){
+            weapon = Matrix_Translate(0.2,-0.45,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_pistol");
     } else {
-        weapon = Matrix_Translate(0.15,-0.3,-0.5) * Matrix_Scale(0.15f, 0.15f, 0.15f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_m4a1");
+            weapon = Matrix_Translate(0.15,-0.3,-0.5) * Matrix_Scale(0.15f, 0.15f, 0.15f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_m4a1");
+    }
     }
 }
 
@@ -1549,6 +1553,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
     // Atualizamos a distância da câmera para a origem utilizando a
     // movimentação da "rodinha", simulando um ZOOM.
     g_CameraDistance -= 0.1f*yoffset;
+    std::cout << g_CameraDistance << std::endl;
 
     // Uma câmera look-at nunca pode estar exatamente "em cima" do ponto para
     // onde ela está olhando, pois isto gera problemas de divisão por zero na
@@ -1677,6 +1682,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_F && action == GLFW_PRESS)
     {
         free_Camera = !free_Camera;
+        show_weapon = !show_weapon;
     }
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
