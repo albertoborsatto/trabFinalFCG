@@ -66,6 +66,8 @@ void main()
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l +2*n*(dot(n,l)); // PREENCHA AQUI o vetor de reflexão especular ideal
 
+    vec4 h = normalize(v+l);
+
     vec4 L = vec4(0.0, 2.0, 1.0, 1.0);
     vec4 vetorDirecao = vec4(0.0, -1.0, 0.0, 0.0);
     float trintaGraus = radians(30);
@@ -75,7 +77,7 @@ void main()
     vec3 Ks; // Refletância especular
     vec3 Ka; // Refletância ambiente
     float q; // Expoente especular para o modelo de iluminação de Phong
-
+    
     if ( object_id == SPHERE )
     {
         // PREENCHA AQUI
