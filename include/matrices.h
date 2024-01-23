@@ -276,7 +276,7 @@ glm::mat4 Matrix_Camera_View(glm::vec4* position_c, glm::vec4 view_vector, glm::
     );
 }
 
-glm::mat4 Matrix_Camera_View_Look_At(glm::vec4 position_c, glm::vec4 view_vector, glm::vec4 up_vector)
+glm::mat4 Matrix_Camera_View_lookAt(glm::vec4 position_c, glm::vec4 view_vector, glm::vec4 up_vector)
 {
     glm::vec4 w = -view_vector;
     glm::vec4 u = crossproduct(up_vector, w);

@@ -171,7 +171,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 void DrawCube(GLint render_as_black_uniform); // Desenha um cubo
 
-void RenderScenario(glm::mat4 model);
+void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_black_uniform);
 void RenderWeapon(glm::mat4 pistol);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
@@ -471,7 +471,7 @@ int main(int argc, char* argv[])
     /* int walls_positions[20][20] = {3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
                                    3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
                                    3}; */
-    
+
     while (!glfwWindowShouldClose(window))
     {
         float current_time = (float)glfwGetTime();
@@ -519,7 +519,7 @@ int main(int argc, char* argv[])
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
-            view = Matrix_Camera_View_Look_At(camera_position_c, camera_view_vector, camera_up_vector);
+            view = Matrix_Camera_View_lookAt(camera_position_c, camera_view_vector, camera_up_vector);
         } else {
             view = Matrix_Camera_View(&camera_position_c, camera_view_vector, camera_up_vector, frente, tras, direita, esquerda, speed, noclip, passo);
         }
@@ -575,8 +575,55 @@ int main(int argc, char* argv[])
         }
 
         //RenderScenario(model);
+ 
+        RenderMap(model, vertex_array_object_id, render_as_black_uniform);
+        /* glBindVertexArray(vertex_array_object_id);
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(10.0f, 0.0f, 0.5f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, BUNNY);
+        DrawCube(render_as_black_uniform); */
 
-        //Desenhamos parede
+        glm::mat4 identity = Matrix_Identity();
+        glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
+
+        RenderWeapon(model);
+
+        // Imprimimos na tela os ângulos de Euler que controlam a rotação do
+        // terceiro cubo.
+        TextRendering_ShowEulerAngles(window);
+
+        // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
+        TextRendering_ShowProjection(window);
+
+        // Imprimimos na tela informação sobre o número de quadros renderizados
+        // por segundo (frames per second).
+        TextRendering_ShowFramesPerSecond(window);
+
+        // O framebuffer onde OpenGL executa as operações de renderização não
+        // é o mesmo que está sendo mostrado para o usuário, caso contrário
+        // seria possível ver artefatos conhecidos como "screen tearing". A
+        // chamada abaixo faz a troca dos buffers, mostrando para o usuário
+        // tudo que foi renderizado pelas funções acima.
+        // Veja o link: https://en.wikipedia.org/w/index.php?title=Multiple_buffering&oldid=793452829#Double_buffering_in_computer_graphics
+        glfwSwapBuffers(window);
+
+        // Verificamos com o sistema operacional se houve alguma interação do
+        // usuário (teclado, mouse, ...). Caso positivo, as funções de callback
+        // definidas anteriormente usando glfwSet*Callback() serão chamadas
+        // pela biblioteca GLFW.
+        glfwPollEvents();
+    }
+
+    // Finalizamos o uso dos recursos do sistema operacional
+    glfwTerminate();
+
+    // Fim do programa
+    return 0;
+}
+
+void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_black_uniform){
+            //Desenhamos paredes
         glBindVertexArray(vertex_array_object_id);
         model = Matrix_Identity();
         model = model * Matrix_Scale(20.0f, 1.0f, 0.01f);
@@ -913,98 +960,6 @@ int main(int argc, char* argv[])
         DrawVirtualObject("Cylinder.002_Cylinder.023");
         DrawVirtualObject("Cylinder.003_Cylinder.024");     
 
-        /* glBindVertexArray(vertex_array_object_id);
-        model = Matrix_Identity();
-        model = model * Matrix_Translate(10.0f, 0.0f, 0.5f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
-        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawCube(render_as_black_uniform); */
-
-        glm::mat4 identity = Matrix_Identity();
-        glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
-
-        RenderWeapon(model);
-
-        // Imprimimos na tela os ângulos de Euler que controlam a rotação do
-        // terceiro cubo.
-        TextRendering_ShowEulerAngles(window);
-
-        // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
-        TextRendering_ShowProjection(window);
-
-        // Imprimimos na tela informação sobre o número de quadros renderizados
-        // por segundo (frames per second).
-        TextRendering_ShowFramesPerSecond(window);
-
-        // O framebuffer onde OpenGL executa as operações de renderização não
-        // é o mesmo que está sendo mostrado para o usuário, caso contrário
-        // seria possível ver artefatos conhecidos como "screen tearing". A
-        // chamada abaixo faz a troca dos buffers, mostrando para o usuário
-        // tudo que foi renderizado pelas funções acima.
-        // Veja o link: https://en.wikipedia.org/w/index.php?title=Multiple_buffering&oldid=793452829#Double_buffering_in_computer_graphics
-        glfwSwapBuffers(window);
-
-        // Verificamos com o sistema operacional se houve alguma interação do
-        // usuário (teclado, mouse, ...). Caso positivo, as funções de callback
-        // definidas anteriormente usando glfwSet*Callback() serão chamadas
-        // pela biblioteca GLFW.
-        glfwPollEvents();
-    }
-
-    // Finalizamos o uso dos recursos do sistema operacional
-    glfwTerminate();
-
-    // Fim do programa
-    return 0;
-}
-
-void RenderScenario(glm::mat4 model) {
-
-    //Desenhamos o modelo do chão
-    model = Matrix_Translate(0.0f,-1.0f, 0.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, PLANE);
-    DrawVirtualObject("the_plane");
-
-    model = Matrix_Translate(0.0f, 1.0f, 0.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f)
-          * Matrix_Rotate_Z(PI);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, PLANE);
-    DrawVirtualObject("the_plane");
-
-    model = Matrix_Translate(0.0f, -1.0f, -4.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, WALL);
-    DrawVirtualObject("the_wall");
-
-    model = Matrix_Translate(4.0f, -1.0f, 0.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f)
-          * Matrix_Rotate_Y(3.0f*PI/2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, WALL);
-    DrawVirtualObject("the_wall");
-
-    model = Matrix_Translate(-4.0f, -1.0f, 0.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f)
-          * Matrix_Rotate_Y(PI/2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, WALL);
-    DrawVirtualObject("the_wall");
-
-    model = Matrix_Translate(0.0f, -1.0f, -3.0f)
-          * Matrix_Scale(2.0f, 0.5f, 2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, WALL);
-    DrawVirtualObject("the_wall");
-
-    model = Matrix_Translate(0.0f, 0.0f, -1.5f)
-          * Matrix_Scale(2.0f, 1.0f, 0.5f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, PLANE);
-    DrawVirtualObject("the_plane");
 }
 
 void RenderWeapon(glm::mat4 weapon) {
