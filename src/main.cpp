@@ -248,6 +248,7 @@ bool tras = false;
 bool esquerda = false;
 bool show_weapon = true;
 bool free_Camera = true;
+bool load_coordinates = true;
 bool noclip = false;
 bool pistol_Current = false;
 int flashlight_On = 0;
@@ -270,6 +271,10 @@ float r;
 float y;
 float z;
 float x;
+
+float y1;
+float z1;
+float x1;
 
 // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
 // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -313,7 +318,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - Seu Cartao - Seu Nome", NULL, NULL);
+    window = glfwCreateWindow(1920 , 1080, "INF01047 - Seu Cartao - Seu Nome", glfwGetPrimaryMonitor(), NULL);
     if (!window)
     {
         glfwTerminate();
@@ -342,7 +347,8 @@ int main(int argc, char* argv[])
     // redimensionada, por consequência alterando o tamanho do "framebuffer"
     // (região de memória onde são armazenados os pixels da imagem).
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
-    FramebufferSizeCallback(window, 800, 600); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+    FramebufferSizeCallback(window, 1920, 1080); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Imprimimos no terminal informações sobre a GPU do sistema
     const GLubyte *vendor      = glGetString(GL_VENDOR);
@@ -522,6 +528,12 @@ int main(int argc, char* argv[])
 
             view = Matrix_Camera_View_lookAt(camera_position_c, camera_view_vector, camera_up_vector);
         } else {
+            if(x1 != 0 && y1 != 0 && z1 != 0) {
+                camera_position_c = glm::vec4(x1,y1,z1,1.0f);
+                x1 = 0;
+                y1 = 0;
+                z1 = 0;
+            }
             view = Matrix_Camera_View(&camera_position_c, camera_view_vector, camera_up_vector, frente, tras, direita, esquerda, speed, noclip, passo);
         }
 
@@ -970,11 +982,13 @@ void RenderWeapon(glm::mat4 weapon) {
             weapon = Matrix_Translate(0.2,-0.45,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
             glUniform1i(g_object_id_uniform, SPHERE);
+            glClear(GL_DEPTH_BUFFER_BIT);
             DrawVirtualObject("the_pistol");
     } else {
             weapon = Matrix_Translate(0.15,-0.3,-0.5) * Matrix_Scale(0.15f, 0.15f, 0.15f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
             glUniform1i(g_object_id_uniform, SPHERE);
+            glClear(GL_DEPTH_BUFFER_BIT);
             DrawVirtualObject("the_m4a1");
     }
     }
@@ -1683,6 +1697,11 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     {
         free_Camera = !free_Camera;
         show_weapon = !show_weapon;
+        if(!free_Camera) {
+            y1 = camera_position_c.y;
+            z1 = camera_position_c.z;
+            x1 = camera_position_c.x;
+        }
     }
     if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {

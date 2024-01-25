@@ -83,7 +83,7 @@ void main()
         // PREENCHA AQUI
         // Propriedades espectrais da esfera
         Kd = vec3(0.8,0.4,0.08);
-        Ks = vec3(0.0,0.0,0.0);
+        Ks = vec3(1.0,1.0,1.0);
         Ka = vec3(0.4,0.2,0.04);
         q = 1.0;
     }
