@@ -29,6 +29,7 @@ uniform int flashlightOn;
 #define PALLET 10
 #define TRASH 11
 #define FERRARI 12
+#define FENCE 13
 uniform int object_id;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -83,7 +84,7 @@ void main()
         // PREENCHA AQUI
         // Propriedades espectrais da esfera
         Kd = vec3(0.8,0.4,0.08);
-        Ks = vec3(1.0,1.0,1.0);
+        Ks = vec3(0.0,0.0,0.0);
         Ka = vec3(0.4,0.2,0.04);
         q = 1.0;
     }
@@ -181,6 +182,14 @@ void main()
         q = 1.0;
     }
     else if( object_id == FERRARI ) {
+         // PREENCHA AQUI
+        // Propriedades espectrais do plano
+        Kd = vec3(0.0,0.0,0.0);
+        Ks = vec3(0.0,0.0,0.0);
+        Ka = vec3(0.0,0.0,0.0);
+        q = 1.0;
+    }
+    else if( object_id == FENCE ) {
          // PREENCHA AQUI
         // Propriedades espectrais do plano
         Kd = vec3(0.0,0.0,0.0);

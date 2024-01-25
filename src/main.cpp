@@ -637,15 +637,42 @@ int main(int argc, char* argv[])
 }
 
 void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_black_uniform){
-            //Desenhamos paredes
-        glBindVertexArray(vertex_array_object_id);
-        model = Matrix_Identity();
-        model = model * Matrix_Scale(20.0f, 1.0f, 0.01f);
-        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawCube(render_as_black_uniform);
+    
+    glBindVertexArray(vertex_array_object_id);
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-9.4f, 0.8f, 0.0f) * Matrix_Scale(1.55f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, BUNNY);
+    DrawVirtualObject("Plane.001");
 
-        model = Matrix_Identity();
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(10.0f, 0.8f, 0.5f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(1.55f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, BUNNY);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(9.4f, 0.8f, 20.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(1.55f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, BUNNY);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-10.0f, 0.8f, 19.4f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(1.55f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, BUNNY);
+    DrawVirtualObject("Plane.001");
+    
+    glBindVertexArray(vertex_array_object_id);
+    model = Matrix_Identity();
+    model = model * Matrix_Scale(20.0f, 1.0f, 0.01f);
+    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, BUNNY);
+    DrawCube(render_as_black_uniform);
+
+    glBindVertexArray(vertex_array_object_id);
+
+        /* model = Matrix_Identity();
         model = model * Matrix_Translate(10.0f, 0.0f, 10.0f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
@@ -661,7 +688,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = model * Matrix_Translate(-10.0f, 0.0f, 10.0f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
-        DrawCube(render_as_black_uniform);
+        DrawCube(render_as_black_uniform); */
 
         model = Matrix_Identity();
         model = model * Matrix_Translate(0.0f, -0.5f, 10.0f) * Matrix_Scale(20.0f, 0.01f, 20.0f);
