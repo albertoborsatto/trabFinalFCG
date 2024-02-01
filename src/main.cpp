@@ -43,6 +43,8 @@
 // Headers da biblioteca para carregar modelos obj
 #include <tiny_obj_loader.h>
 
+#include <stb_image.h>
+
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
@@ -58,11 +60,12 @@
 #define CONTAINER 6
 #define CAR 7
 #define OPENEDCONTAINER 8
-#define CLOSEDCONTAINER 8
 #define BARREL 9
 #define PALLET 10
 #define TRASH 11
 #define FERRARI 12
+#define FENCE 13
+#define CAR2 14
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -131,9 +134,9 @@ void PopMatrix(glm::mat4& M);
 // logo após a definição de main() neste arquivo.
 void BuildTrianglesAndAddToVirtualScene(ObjModel*); // Constrói representação de um ObjModel como malha de triângulos para renderização
 GLuint BuildTriangles(); // Constrói triângulos para renderização
-
 void ComputeNormals(ObjModel* model); // Computa normais de um ObjModel, caso não existam.
 void LoadShadersFromFiles(); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
+void LoadTextureImage(const char* filename); // Função que carrega imagens de textura
 void DrawVirtualObject(const char* object_name); // Desenha um objeto armazenado em g_VirtualScene
 GLuint LoadShader_Vertex(const char* filename);   // Carrega um vertex shader
 GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
@@ -183,6 +186,8 @@ struct SceneObject
     size_t       num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
     GLenum       rendering_mode; // Modo de rasterização (GL_TRIANGLES, GL_TRIANGLE_STRIP, etc.)
     GLuint       vertex_array_object_id; // ID do VAO onde estão armazenados os atributos do modelo
+    glm::vec3    bbox_min; // Axis-Aligned Bounding Box do objeto
+    glm::vec3    bbox_max;
 };
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
@@ -259,9 +264,14 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+GLint g_bbox_min_uniform;
+GLint g_bbox_max_uniform;
 GLint g_camera_position_c_uniform;
 GLint g_camera_view_vector_uniform;
 GLint g_flashlightOn;
+
+// Número de texturas carregadas pela função LoadTextureImage()
+GLuint g_NumLoadedTextures = 0;
 
 // Computamos a posição da câmera utilizando coordenadas esféricas.  As
 // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
@@ -363,6 +373,18 @@ int main(int argc, char* argv[])
     //
     LoadShadersFromFiles();
 
+        LoadTextureImage("../../data/car_uv.png");
+        LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");
+        LoadTextureImage("../../data/gold_gun.jpg");
+        LoadTextureImage("../../data/brickwall.jpg");
+        LoadTextureImage("../../data/asphalt.jpg");
+        LoadTextureImage("../../data/container_green.jpg");
+        LoadTextureImage("../../data/oildrum_col.jpg");
+        LoadTextureImage("../../data/pallet.jpg");
+        LoadTextureImage("../../data/trash.jpg");
+        LoadTextureImage("../../data/silver_container.jpg");
+        LoadTextureImage("../../data/texture.jpg");
+
     // Construímos a representação de um triângulo
     GLuint vertex_array_object_id = BuildTriangles();
 
@@ -399,6 +421,10 @@ int main(int argc, char* argv[])
     ComputeNormals(&carmodel);
     BuildTrianglesAndAddToVirtualScene(&carmodel);
 
+    ObjModel carmodel2("../../data/Car.obj");
+    ComputeNormals(&carmodel2);
+    BuildTrianglesAndAddToVirtualScene(&carmodel2);
+
     ObjModel openedcontainermodel("../../data/Container20-4DoorsShell.obj");
     ComputeNormals(&openedcontainermodel);
     BuildTrianglesAndAddToVirtualScene(&openedcontainermodel);
@@ -418,10 +444,6 @@ int main(int argc, char* argv[])
     ObjModel trashmodel("../../data/Garbage_Container_.obj");
     ComputeNormals(&trashmodel);
     BuildTrianglesAndAddToVirtualScene(&trashmodel);
-
-    ObjModel ferrarimodel("../../data/Car.obj");
-    ComputeNormals(&ferrarimodel);
-    BuildTrianglesAndAddToVirtualScene(&ferrarimodel);
 
     if ( argc > 1 )
     {
@@ -640,35 +662,80 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
     
     glBindVertexArray(vertex_array_object_id);
     model = Matrix_Identity();
-    model = model * Matrix_Translate(-9.4f, 0.8f, 0.0f) * Matrix_Scale(1.55f, 0.2f, 1.0f);
+    model = model * Matrix_Translate(-9.8f, 0.8f, 0.0f) * Matrix_Scale(0.5f, 0.2f, 1.0f);
     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, BUNNY);
+    glUniform1i(g_object_id_uniform, WALL);
     DrawVirtualObject("Plane.001");
 
-    model = Matrix_Identity();
-    model = model * Matrix_Translate(10.0f, 0.8f, 0.5f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(1.55f, 0.2f, 1.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, BUNNY);
-    DrawVirtualObject("Plane.001");
-
-    model = Matrix_Identity();
-    model = model * Matrix_Translate(9.4f, 0.8f, 20.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(1.55f, 0.2f, 1.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, BUNNY);
-    DrawVirtualObject("Plane.001");
-
-    model = Matrix_Identity();
-    model = model * Matrix_Translate(-10.0f, 0.8f, 19.4f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(1.55f, 0.2f, 1.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, BUNNY);
-    DrawVirtualObject("Plane.001");
-    
     glBindVertexArray(vertex_array_object_id);
     model = Matrix_Identity();
-    model = model * Matrix_Scale(20.0f, 1.0f, 0.01f);
-    glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, BUNNY);
-    DrawCube(render_as_black_uniform);
+    model = model * Matrix_Translate(-3.4f, 0.8f, 0.0f) * Matrix_Scale(0.50f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    glBindVertexArray(vertex_array_object_id);
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(3.0f, 0.8f, 0.0f) * Matrix_Scale(0.56f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(10.0f, 0.8f, 0.2f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.5f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(10.0f, 0.8f, 6.6f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.5f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(10.0f, 0.8f, 13.0f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.56f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(9.9f, 0.8f, 20.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(0.5f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(3.5f, 0.8f, 20.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(0.5f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-2.9f, 0.8f, 20.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(0.56f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-10.0f, 0.8f, 19.8f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(0.50f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-10.0f, 0.8f, 13.4f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(0.50f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-10.0f, 0.8f, 7.0f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(0.56f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
 
     glBindVertexArray(vertex_array_object_id);
 
@@ -691,39 +758,66 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         DrawCube(render_as_black_uniform); */
 
         model = Matrix_Identity();
-        model = model * Matrix_Translate(0.0f, -0.5f, 10.0f) * Matrix_Scale(20.0f, 0.01f, 20.0f);
+        model = model * Matrix_Translate(0.0f, -0.5f, 10.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
-        DrawCube(render_as_black_uniform);
+        DrawVirtualObject("the_plane");
 
         model = Matrix_Identity();
-        model = model * Matrix_Translate(5.0f, -1.9f, 22.5f) * Matrix_Scale(0.7f, 0.7f, 0.7f);
+        model = model * Matrix_Translate(-2.0f, -0.5f, 19.95f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_container");
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
 
         model = Matrix_Identity();
-        model = model * Matrix_Translate(5.0f, -1.9f, 20.00f) * Matrix_Scale(0.7f, 0.7f, 0.7f);
+        model = model * Matrix_Translate(-2.0f, -0.5f, 17.45f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_container");
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
 
         model = Matrix_Identity();
-        model = model * Matrix_Translate(5.0f, -0.50f, 21.3f) * Matrix_Scale(0.7f, 0.7f, 0.7f);
+        model = model * Matrix_Translate(-2.0f, 0.76f, 18.75f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_container");
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
 
         model = Matrix_Identity();
         model = model * Matrix_Translate(6.0f, -0.5f, 4.5f) * Matrix_Rotate_Y(-(PI/4.0f)) * Matrix_Scale(0.2f, 0.2f, 0.2f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CAR);
         DrawVirtualObject("the_car");
 
         model = Matrix_Identity();
         model = model * Matrix_Translate(-8.7f, -0.5f, 8.0f) * Matrix_Rotate_Y(-(PI/2)) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -735,7 +829,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-10.0f, -0.5f, 8.0f) * Matrix_Rotate_Y(-(PI/2)) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -750,7 +844,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-2.3f, -0.5f, 2.7f) * Matrix_Scale(0.005f, 0.005f, 0.005f) * Matrix_Rotate_Y(PI/64);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -765,7 +859,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-2.3f, -0.5f, 1.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -778,7 +872,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-4.0f, -0.5f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -793,7 +887,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-4.0f, -0.5f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -808,7 +902,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-4.0f, -0.5f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -823,7 +917,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-4.0f, -0.5f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -838,7 +932,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-4.0f, 0.8f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -853,7 +947,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-4.0f, 0.8f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -868,7 +962,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(1.0f, -0.5f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -883,7 +977,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(1.0f, -0.5f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -898,7 +992,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(1.0f, -0.5f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -913,7 +1007,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(1.0f, -0.5f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -926,7 +1020,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(1.0f, 0.8f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -941,7 +1035,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(1.0f, 0.8f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CONTAINER);
         DrawVirtualObject("BottomPanel");
         DrawVirtualObject("MainFrame");
         DrawVirtualObject("Corners");
@@ -956,7 +1050,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = model * Matrix_Translate(-7.0f, -0.5f, 17.0f) * Matrix_Scale(0.01f, 0.01f, 0.01f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, PALLET);
         DrawVirtualObject("default");
         DrawVirtualObject("polySurface38");
         DrawVirtualObject("polySurface39");
@@ -965,38 +1059,43 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         model = Matrix_Identity();
         model = Matrix_Translate(7.0f, -0.5f, 18.5f) * Matrix_Rotate_Y(-(PI/4)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, TRASH);
         DrawVirtualObject("Cube");
 
         model = Matrix_Identity();
         model = Matrix_Translate(5.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, TRASH);
         DrawVirtualObject("Cube");
         model = Matrix_Identity();
         model = Matrix_Translate(4.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, TRASH);
         DrawVirtualObject("Cube");
         
         model = Matrix_Identity();
         model = model * Matrix_Translate(-7.0f, -0.5f, 15.0f) * Matrix_Rotate_Y(PI/4) * Matrix_Scale(0.4f, 0.4f, 0.4f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
+        glUniform1i(g_object_id_uniform, CAR);
         DrawVirtualObject("Cylinder.002_Cylinder.023");
         DrawVirtualObject("Cylinder.003_Cylinder.024");
 
         model = Matrix_Identity();
+        model = model * Matrix_Translate(7.0f, -0.5f, 16.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(0.2f, 0.2f, 0.2f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CAR);
+        DrawVirtualObject("the_car");
+        
+        /* model = Matrix_Identity();
         model = Matrix_Translate(7.0f, -0.5f, 16.5f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.7f, 0.7f, 0.7f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("Car_Cube");
+        glUniform1i(g_object_id_uniform, CAR);
+        DrawVirtualObject("Car_Cube"); */
 
         model = Matrix_Identity();
         model = model * Matrix_Translate(-6.5f, -0.5f, 3.0f) * Matrix_Rotate_Y(-PI/4) * Matrix_Scale(0.4f, 0.4f, 0.4f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("Cylinder.011_Cylinder.012");
+        glUniform1i(g_object_id_uniform, CAR);
         DrawVirtualObject("Cylinder_Cylinder.016");
         DrawVirtualObject("Cylinder.002_Cylinder.023");
         DrawVirtualObject("Cylinder.003_Cylinder.024");     
@@ -1008,17 +1107,69 @@ void RenderWeapon(glm::mat4 weapon) {
         if(pistol_Current){
             weapon = Matrix_Translate(0.2,-0.45,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
-            glUniform1i(g_object_id_uniform, SPHERE);
+            glUniform1i(g_object_id_uniform, PISTOL);
             glClear(GL_DEPTH_BUFFER_BIT);
             DrawVirtualObject("the_pistol");
     } else {
             weapon = Matrix_Translate(0.15,-0.3,-0.5) * Matrix_Scale(0.15f, 0.15f, 0.15f);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
-            glUniform1i(g_object_id_uniform, SPHERE);
+            glUniform1i(g_object_id_uniform, M4A1);
             glClear(GL_DEPTH_BUFFER_BIT);
             DrawVirtualObject("the_m4a1");
     }
     }
+}
+
+// Função que carrega uma imagem para ser utilizada como textura
+void LoadTextureImage(const char* filename)
+{
+    printf("Carregando imagem \"%s\"... ", filename);
+
+    // Primeiro fazemos a leitura da imagem do disco
+    stbi_set_flip_vertically_on_load(true);
+    int width;
+    int height;
+    int channels;
+    unsigned char *data = stbi_load(filename, &width, &height, &channels, 3);
+
+    if ( data == NULL )
+    {
+        fprintf(stderr, "ERROR: Cannot open image file \"%s\".\n", filename);
+        std::exit(EXIT_FAILURE);
+    }
+
+    printf("OK (%dx%d).\n", width, height);
+
+    // Agora criamos objetos na GPU com OpenGL para armazenar a textura
+    GLuint texture_id;
+    GLuint sampler_id;
+    glGenTextures(1, &texture_id);
+    glGenSamplers(1, &sampler_id);
+
+    // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Parâmetros de amostragem da textura.
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Agora enviamos a imagem lida do disco para a GPU
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+
+    GLuint textureunit = g_NumLoadedTextures;
+    glActiveTexture(GL_TEXTURE0 + textureunit);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindSampler(textureunit, sampler_id);
+
+    stbi_image_free(data);
+
+    g_NumLoadedTextures += 1;
 }
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
@@ -1090,6 +1241,19 @@ void LoadShadersFromFiles()
     g_camera_position_c_uniform = glGetUniformLocation(g_GpuProgramID, "camera_position_c");
     g_camera_view_vector_uniform = glGetUniformLocation(g_GpuProgramID, "camera_view_vector");
     g_flashlightOn = glGetUniformLocation(g_GpuProgramID, "flashlightOn");
+    glUseProgram(g_GpuProgramID);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage5"), 5);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage6"), 6);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
+    glUseProgram(0);
 }
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha
