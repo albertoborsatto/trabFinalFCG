@@ -125,6 +125,13 @@ struct ObjModel
     }
 };
 
+struct bbox
+{
+    glm::vec4    bbox_min;
+    glm::vec4    bbox_max;
+    double       angle;
+};
+
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -143,6 +150,7 @@ GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
 void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
+bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_max);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -328,7 +336,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(1920 , 1080, "INF01047 - Seu Cartao - Seu Nome", glfwGetPrimaryMonitor(), NULL);
+    window = glfwCreateWindow(1920 , 1080, "INF01047 - Seu Cartao - Seu Nome", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -451,6 +459,15 @@ int main(int argc, char* argv[])
         BuildTrianglesAndAddToVirtualScene(&model);
     }
 
+    std::vector<bbox> collisionList;
+
+    bbox wall1;
+    wall1.bbox_min = glm::vec4(-10.f, 0.0f, 0.0f, 0);
+    wall1.bbox_max = glm::vec4(-5.0f, 5.0f, 0.0f, 0);
+    wall1.angle = atan2(wall1.bbox_max.y - wall1.bbox_min.y, wall1.bbox_max.x - wall1.bbox_min.x);
+
+    collisionList.push_back(wall1);
+
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
 
@@ -534,6 +551,24 @@ int main(int argc, char* argv[])
         glUniform4fv(g_camera_position_c_uniform, 1, glm::value_ptr(camera_position_c));
         glUniform4fv(g_camera_view_vector_uniform, 1, glm::value_ptr(camera_view_vector));
         glUniform1i(g_flashlightOn, flashlight_On);
+
+        for (int i=0; i<collisionList.size(); i++) {
+            bbox wallHitbox;
+            wallHitbox.bbox_min = collisionList[i].bbox_min;
+            wallHitbox.bbox_max = collisionList[i].bbox_max;
+
+            wallHitbox.bbox_max.x+=1;
+            wallHitbox.bbox_min.x-=1;
+            wallHitbox.bbox_max.z+=1;
+            wallHitbox.bbox_min.z-=1;
+
+            if(detectColision(camera_position_c, wallHitbox.bbox_min, wallHitbox.bbox_max))
+            {
+                std::cout << "ticolinha";
+            }
+
+
+        }
 
         if(free_Camera == false){
             r = 20.0f;
@@ -1211,6 +1246,28 @@ void RenderWeapon(glm::mat4 weapon) {
             DrawVirtualObject("the_m4a1");
     }
     }
+}
+
+bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_max)
+{
+    if (position.x < hitbox_min.x || position.x > hitbox_max.x)
+        return false; // No collision along X-axis
+
+    if (position.y < hitbox_min.y || position.y > hitbox_max.y)
+        return false; // No collision along Y-axis
+
+    if (position.z < hitbox_min.z || position.z > hitbox_max.z)
+        return false; // No collision along Z-axis
+
+    return true;
+
+    /*for (std::map<std::string, SceneObject>::iterator it = g_VirtualScene.begin(); it != g_VirtualScene.end(); it++)
+    {
+        SceneObject obj = it->second;
+        printf("\n%s: ", ((std::string)it->first).c_str());
+        printf("bboxmin x:%f y:%f z:%f ", obj.bbox_min.x, obj.bbox_min.y, obj.bbox_min.z);
+        printf("bboxmax x:%f y:%f z:%f ", obj.bbox_max.x, obj.bbox_max.y, obj.bbox_max.z);
+    }*/
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
