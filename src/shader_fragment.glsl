@@ -136,7 +136,7 @@ void main()
         U = texcoords.x;
         V = texcoords.y;
 
-        vec3 Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
+        vec3 Kd0 = texture(TextureImage4, vec2(U,V)).rgb;
 
     // Equação de Iluminação
         float lambert = max(0,dot(n,l));
@@ -228,6 +228,7 @@ void main()
     }
     else if ( object_id == M4A1 )
     {
+        
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
         U = texcoords.x;
         V = texcoords.y;

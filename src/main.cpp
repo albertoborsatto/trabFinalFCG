@@ -757,12 +757,105 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         glUniform1i(g_object_id_uniform, BUNNY);
         DrawCube(render_as_black_uniform); */
 
+        
         model = Matrix_Identity();
         model = model * Matrix_Translate(0.0f, -0.5f, 10.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
+    
 
+        /* offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 3.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        }
+
+        offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 5.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        }
+
+        offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 7.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        }
+
+        offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 9.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        }
+
+        offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 11.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        }
+
+        offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 13.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        }
+
+        offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 15.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        }
+
+        offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 17.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        }
+
+        offset = 0.0f;
+        for(int i = 0; i < 10; i++) {
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 19.0f);
+            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, PLANE);
+            DrawVirtualObject("the_plane");
+            offset += 2.0f;
+        } */
+        
+        
         model = Matrix_Identity();
         model = model * Matrix_Translate(-2.0f, -0.5f, 19.95f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
