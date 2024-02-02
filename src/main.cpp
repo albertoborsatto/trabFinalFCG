@@ -307,6 +307,8 @@ float delta_t;
 float speed;
 float prev_time;
 
+bool collisionBool = false;
+
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -462,11 +464,26 @@ int main(int argc, char* argv[])
     std::vector<bbox> collisionList;
 
     bbox wall1;
-    wall1.bbox_min = glm::vec4(-10.f, 0.0f, 0.0f, 0);
-    wall1.bbox_max = glm::vec4(-5.0f, 5.0f, 0.0f, 0);
+    wall1.bbox_min = glm::vec4(-10.0f, 0.0f, -0.5f, 0);
+    wall1.bbox_max = glm::vec4(10.0f, 5.0f, -0.5f, 0);
     wall1.angle = atan2(wall1.bbox_max.y - wall1.bbox_min.y, wall1.bbox_max.x - wall1.bbox_min.x);
+    bbox wall2;
+    wall2.bbox_min = glm::vec4(-10.0f, 0.0f, 20.5f, 0);
+    wall2.bbox_max = glm::vec4(10.0f, 5.0f, 20.5f, 0);
+    wall2.angle = atan2(wall2.bbox_max.y - wall2.bbox_min.y, wall2.bbox_max.x - wall2.bbox_min.x);
+    bbox wall3;
+    wall3.bbox_min = glm::vec4(10.5f, 0.0f, 0.0f, 0);
+    wall3.bbox_max = glm::vec4(10.5f, 5.0f, 20.0f, 0);
+    wall3.angle = atan2(wall3.bbox_max.y - wall3.bbox_min.y, wall3.bbox_max.x - wall3.bbox_min.x);
+    bbox wall4;
+    wall4.bbox_min = glm::vec4(-10.5f, 0.0f, 0.0f, 0);
+    wall4.bbox_max = glm::vec4(-10.5f, 5.0f, 20.0f, 0);
+    wall4.angle = atan2(wall4.bbox_max.y - wall4.bbox_min.y, wall4.bbox_max.x - wall4.bbox_min.x);
 
     collisionList.push_back(wall1);
+    collisionList.push_back(wall2);
+    collisionList.push_back(wall3);
+    collisionList.push_back(wall4);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -504,7 +521,7 @@ int main(int argc, char* argv[])
         //GLint model_uniform           = glGetUniformLocation(g_GpuProgramID, "model"); // Variável da matriz "model"
         //GLint render_as_black_uniform = glGetUniformLocation(g_GpuProgramID, "render_as_black"); // Variável booleana em shader_vertex.glsl
         delta_t;
-        speed = 3.0f;
+        speed = 8.0f;
         prev_time = (float)glfwGetTime();
         // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     }
@@ -541,6 +558,8 @@ int main(int argc, char* argv[])
         // os shaders de vértice e fragmentos).
         glUseProgram(g_GpuProgramID);
 
+        glm::vec4 lastCameraPos;
+
         glm::mat4 view;
 
         agora = glfwGetTime();
@@ -551,24 +570,6 @@ int main(int argc, char* argv[])
         glUniform4fv(g_camera_position_c_uniform, 1, glm::value_ptr(camera_position_c));
         glUniform4fv(g_camera_view_vector_uniform, 1, glm::value_ptr(camera_view_vector));
         glUniform1i(g_flashlightOn, flashlight_On);
-
-        for (int i=0; i<collisionList.size(); i++) {
-            bbox wallHitbox;
-            wallHitbox.bbox_min = collisionList[i].bbox_min;
-            wallHitbox.bbox_max = collisionList[i].bbox_max;
-
-            wallHitbox.bbox_max.x+=1;
-            wallHitbox.bbox_min.x-=1;
-            wallHitbox.bbox_max.z+=1;
-            wallHitbox.bbox_min.z-=1;
-
-            if(detectColision(camera_position_c, wallHitbox.bbox_min, wallHitbox.bbox_max))
-            {
-                std::cout << "ticolinha";
-            }
-
-
-        }
 
         if(free_Camera == false){
             r = 20.0f;
@@ -585,6 +586,7 @@ int main(int argc, char* argv[])
 
             view = Matrix_Camera_View_lookAt(camera_position_c, camera_view_vector, camera_up_vector);
         } else {
+            lastCameraPos = glm::vec4(camera_position_c.x,camera_position_c.y,camera_position_c.z,camera_position_c.w);
             if(x1 != 0 && y1 != 0 && z1 != 0) {
                 camera_position_c = glm::vec4(x1,y1,z1,1.0f);
                 x1 = 0;
@@ -592,6 +594,24 @@ int main(int argc, char* argv[])
                 z1 = 0;
             }
             view = Matrix_Camera_View(&camera_position_c, camera_view_vector, camera_up_vector, frente, tras, direita, esquerda, speed, noclip, passo);
+        }
+
+        collisionBool = false;
+
+        for (int i=0; i<collisionList.size(); i++) {
+            bbox wallHitbox;
+            wallHitbox.bbox_min = collisionList[i].bbox_min;
+            wallHitbox.bbox_max = collisionList[i].bbox_max;
+
+            wallHitbox.bbox_max.x+=1;
+            wallHitbox.bbox_min.x-=1;
+            wallHitbox.bbox_max.z+=1;
+            wallHitbox.bbox_min.z-=1;
+
+            if(detectColision(camera_position_c, wallHitbox.bbox_min, wallHitbox.bbox_max))
+            {
+                collisionBool=true;
+            }
         }
 
 
@@ -659,6 +679,8 @@ int main(int argc, char* argv[])
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
 
         RenderWeapon(model);
+
+        if(collisionBool) camera_position_c = lastCameraPos;
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -1260,14 +1282,6 @@ bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_m
         return false; // No collision along Z-axis
 
     return true;
-
-    /*for (std::map<std::string, SceneObject>::iterator it = g_VirtualScene.begin(); it != g_VirtualScene.end(); it++)
-    {
-        SceneObject obj = it->second;
-        printf("\n%s: ", ((std::string)it->first).c_str());
-        printf("bboxmin x:%f y:%f z:%f ", obj.bbox_min.x, obj.bbox_min.y, obj.bbox_min.z);
-        printf("bboxmax x:%f y:%f z:%f ", obj.bbox_max.x, obj.bbox_max.y, obj.bbox_max.z);
-    }*/
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
