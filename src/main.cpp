@@ -503,7 +503,22 @@ int main(int argc, char* argv[])
     midContainers6.bbox_min = glm::vec4(-3.5f, 0.0f, 7.0f, 0);
     midContainers6.bbox_max = glm::vec4(-1.5f, 5.0f, 8.0f, 0);
     midContainers6.angle = atan2(midContainers6.bbox_max.y - midContainers6.bbox_min.y, midContainers6.bbox_max.x - midContainers6.bbox_min.x);
-
+    bbox midContainers7;
+    midContainers7.bbox_min = glm::vec4(-2.0f, 0.0f, 1.0f, 0);
+    midContainers7.bbox_max = glm::vec4(0.2f, 5.0f, 2.0f, 0);
+    midContainers7.angle = atan2(midContainers7.bbox_max.y - midContainers7.bbox_min.y, midContainers7.bbox_max.x - midContainers7.bbox_min.x);
+    bbox midContainers8;
+    midContainers8.bbox_min = glm::vec4(-10.0f, 0.0f, 8.5f, 0);
+    midContainers8.bbox_max = glm::vec4(-8.0f, 5.0f, 10.5f, 0);
+    midContainers8.angle = atan2(midContainers8.bbox_max.y - midContainers8.bbox_min.y, midContainers8.bbox_max.x - midContainers8.bbox_min.x);
+    bbox midContainers9;
+    midContainers9.bbox_min = glm::vec4(-1.5f, 0.0f, 16.6f, 0);
+    midContainers9.bbox_max = glm::vec4(0.5f, 5.0f, 16.6f, 0);
+    midContainers9.angle = atan2(midContainers9.bbox_max.y - midContainers9.bbox_min.y, midContainers9.bbox_max.x - midContainers9.bbox_min.x);
+    bbox midContainers10;
+    midContainers10.bbox_min = glm::vec4(-1.5f, 0.0f, 19.5f, 0);
+    midContainers10.bbox_max = glm::vec4(0.5f, 5.0f, 19.5f, 0);
+    midContainers10.angle = atan2(midContainers10.bbox_max.y - midContainers10.bbox_min.y, midContainers10.bbox_max.x - midContainers10.bbox_min.x);
 
     collisionList.push_back(wall1);
     collisionList.push_back(wall2);
@@ -515,6 +530,10 @@ int main(int argc, char* argv[])
     collisionList.push_back(midContainers4);
     collisionList.push_back(midContainers5);
     collisionList.push_back(midContainers6);
+    collisionList.push_back(midContainers7);
+    collisionList.push_back(midContainers8);
+    collisionList.push_back(midContainers9);
+    collisionList.push_back(midContainers10);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
