@@ -479,11 +479,42 @@ int main(int argc, char* argv[])
     wall4.bbox_min = glm::vec4(-10.5f, 0.0f, 0.0f, 0);
     wall4.bbox_max = glm::vec4(-10.5f, 5.0f, 20.0f, 0);
     wall4.angle = atan2(wall4.bbox_max.y - wall4.bbox_min.y, wall4.bbox_max.x - wall4.bbox_min.x);
+    bbox midContainers1;
+    midContainers1.bbox_min = glm::vec4(3.5f, 0.0f, 6.5f, 0);
+    midContainers1.bbox_max = glm::vec4(3.5f, 5.0f, 7.8f, 0);
+    midContainers1.angle = atan2(midContainers1.bbox_max.y - midContainers1.bbox_min.y, midContainers1.bbox_max.x - midContainers1.bbox_min.x);
+    bbox midContainers2;
+    midContainers2.bbox_min = glm::vec4(1.5f, 0.0f, 7.1f, 0);
+    midContainers2.bbox_max = glm::vec4(3.5f, 5.0f, 7.1f, 0);
+    midContainers2.angle = atan2(midContainers2.bbox_max.y - midContainers2.bbox_min.y, midContainers2.bbox_max.x - midContainers2.bbox_min.x);
+    bbox midContainers3;
+    midContainers3.bbox_min = glm::vec4(1.5f, 0.0f, 8.2f, 0);
+    midContainers3.bbox_max = glm::vec4(3.5f, 5.0f, 8.2f, 0);
+    midContainers3.angle = atan2(midContainers3.bbox_max.y - midContainers3.bbox_min.y, midContainers3.bbox_max.x - midContainers3.bbox_min.x);
+    bbox midContainers4;
+    midContainers4.bbox_min = glm::vec4(1.5f, 0.0f, 11.3f, 0);
+    midContainers4.bbox_max = glm::vec4(3.5f, 5.0f, 12.5f, 0);
+    midContainers4.angle = atan2(midContainers4.bbox_max.y - midContainers4.bbox_min.y, midContainers4.bbox_max.x - midContainers4.bbox_min.x);
+    bbox midContainers5;
+    midContainers5.bbox_min = glm::vec4(-3.5f, 0.0f, 11.3f, 0);
+    midContainers5.bbox_max = glm::vec4(-1.5f, 5.0f, 12.5f, 0);
+    midContainers5.angle = atan2(midContainers5.bbox_max.y - midContainers5.bbox_min.y, midContainers5.bbox_max.x - midContainers5.bbox_min.x);
+    bbox midContainers6;
+    midContainers6.bbox_min = glm::vec4(-3.5f, 0.0f, 7.0f, 0);
+    midContainers6.bbox_max = glm::vec4(-1.5f, 5.0f, 8.0f, 0);
+    midContainers6.angle = atan2(midContainers6.bbox_max.y - midContainers6.bbox_min.y, midContainers6.bbox_max.x - midContainers6.bbox_min.x);
+
 
     collisionList.push_back(wall1);
     collisionList.push_back(wall2);
     collisionList.push_back(wall3);
     collisionList.push_back(wall4);
+    collisionList.push_back(midContainers1);
+    collisionList.push_back(midContainers2);
+    collisionList.push_back(midContainers3);
+    collisionList.push_back(midContainers4);
+    collisionList.push_back(midContainers5);
+    collisionList.push_back(midContainers6);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -706,6 +737,8 @@ int main(int argc, char* argv[])
         // definidas anteriormente usando glfwSet*Callback() serão chamadas
         // pela biblioteca GLFW.
         glfwPollEvents();
+
+        std::cout << camera_position_c.x << " " << camera_position_c.y << " " << camera_position_c.z << std::endl;
     }
 
     // Finalizamos o uso dos recursos do sistema operacional
