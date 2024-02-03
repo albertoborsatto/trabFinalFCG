@@ -132,6 +132,11 @@ struct bbox
     double       angle;
 };
 
+struct BoundingSphere {
+    glm::vec3 center;
+    float radius;
+};
+
 
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
@@ -151,6 +156,7 @@ void LoadShader(const char* filename, GLuint shader_id); // Função utilizada p
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
 bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_max);
+bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -460,13 +466,21 @@ int main(int argc, char* argv[])
     }
 
     std::vector<bbox> collisionList;
+    std::vector<bbox> hitScanList;
 
     bbox wall1;
     wall1.bbox_min = glm::vec4(-10.f, 0.0f, 0.0f, 0);
-    wall1.bbox_max = glm::vec4(-5.0f, 5.0f, 0.0f, 0);
+    wall1.bbox_max = glm::vec4(10.0f, 5.0f, 0.0f, 0);
     wall1.angle = atan2(wall1.bbox_max.y - wall1.bbox_min.y, wall1.bbox_max.x - wall1.bbox_min.x);
 
+    bbox bunny;
+    bunny.bbox_min = glm::vec4(0.0f, 0.5f, -5.0f, 0);
+    bunny.bbox_max = glm::vec4(0.0f, 3.5f, -8.0f, 0);
+    bunny.angle = atan2(bunny.bbox_max.y - bunny.bbox_min.y, bunny.bbox_max.x - bunny.bbox_min.x);
+
     collisionList.push_back(wall1);
+
+    hitScanList.push_back(bunny);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -567,6 +581,18 @@ int main(int argc, char* argv[])
                 std::cout << "ticolinha";
             }
 
+
+        }
+
+        BoundingSphere sphere;
+        sphere.center = glm::vec3(-6.5f, 0.5f, 5.0f);
+        sphere.radius = 1.0f;
+        
+        if(isPointInsideSphere(camera_position_c, sphere)) {
+            std::cout << "lalalalal" << std::endl;
+        }
+
+        for(int i = 0; i<hitScanList.size(); i++) {
 
         }
 
@@ -1226,7 +1252,19 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         glUniform1i(g_object_id_uniform, CAR);
         DrawVirtualObject("Cylinder_Cylinder.016");
         DrawVirtualObject("Cylinder.002_Cylinder.023");
-        DrawVirtualObject("Cylinder.003_Cylinder.024");     
+        DrawVirtualObject("Cylinder.003_Cylinder.024");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-6.5f, 0.5f, 5.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PISTOL);
+        DrawVirtualObject("the_sphere");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(0.0f, 0.0f, -5.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CAR);
+        DrawVirtualObject("the_bunny");      
 
 }
 
@@ -1268,6 +1306,14 @@ bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_m
         printf("bboxmin x:%f y:%f z:%f ", obj.bbox_min.x, obj.bbox_min.y, obj.bbox_min.z);
         printf("bboxmax x:%f y:%f z:%f ", obj.bbox_max.x, obj.bbox_max.y, obj.bbox_max.z);
     }*/
+}
+
+bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere) {
+    // Calcula a distância entre o ponto e o centro da esfera
+    float distance = glm::length(point - sphere.center);
+    
+    // Compara a distância com o raio da esfera
+    return distance <= sphere.radius + 0.3f;
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
