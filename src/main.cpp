@@ -476,11 +476,43 @@ int main(int argc, char* argv[])
     wall1.bbox_min = glm::vec4(-10.f, 0.0f, 0.0f, 0);
     wall1.bbox_max = glm::vec4(10.0f, 5.0f, 0.0f, 0);
     wall1.angle = atan2(wall1.bbox_max.y - wall1.bbox_min.y, wall1.bbox_max.x - wall1.bbox_min.x);
+    bbox wall2;
+    wall2.bbox_min = glm::vec4(-10.0f, 0.0f, 20.5f, 0);
+    wall2.bbox_max = glm::vec4(10.0f, 5.0f, 20.5f, 0);
+    wall2.angle = atan2(wall2.bbox_max.y - wall2.bbox_min.y, wall2.bbox_max.x - wall2.bbox_min.x);
+    bbox wall3;
+    wall3.bbox_min = glm::vec4(10.5f, 0.0f, 0.0f, 0);
+    wall3.bbox_max = glm::vec4(10.5f, 5.0f, 20.0f, 0);
+    wall3.angle = atan2(wall3.bbox_max.y - wall3.bbox_min.y, wall3.bbox_max.x - wall3.bbox_min.x);
+    bbox wall4;
+    wall4.bbox_min = glm::vec4(-10.5f, 0.0f, 0.0f, 0);
+    wall4.bbox_max = glm::vec4(-10.5f, 5.0f, 20.0f, 0);
+    wall4.angle = atan2(wall4.bbox_max.y - wall4.bbox_min.y, wall4.bbox_max.x - wall4.bbox_min.x);
+    bbox midContainers1;
+    midContainers1.bbox_min = glm::vec4(3.5f, 0.0f, 6.5f, 0);
+    midContainers1.bbox_max = glm::vec4(3.5f, 5.0f, 7.8f, 0);
+    midContainers1.angle = atan2(midContainers1.bbox_max.y - midContainers1.bbox_min.y, midContainers1.bbox_max.x - midContainers1.bbox_min.x);
+    bbox midContainers2;
+    midContainers2.bbox_min = glm::vec4(1.5f, 0.0f, 7.1f, 0);
+    midContainers2.bbox_max = glm::vec4(3.5f, 5.0f, 7.1f, 0);
+    midContainers2.angle = atan2(midContainers2.bbox_max.y - midContainers2.bbox_min.y, midContainers2.bbox_max.x - midContainers2.bbox_min.x);
+    bbox midContainers3;
+    midContainers3.bbox_min = glm::vec4(1.5f, 0.0f, 8.2f, 0);
+    midContainers3.bbox_max = glm::vec4(3.5f, 5.0f, 8.2f, 0);
+    midContainers3.angle = atan2(midContainers3.bbox_max.y - midContainers3.bbox_min.y, midContainers3.bbox_max.x - midContainers3.bbox_min.x);
+    bbox midContainers4;
+    midContainers4.bbox_min = glm::vec4(1.5f, 0.0f, 11.3f, 0);
+    midContainers4.bbox_max = glm::vec4(3.5f, 5.0f, 12.5f, 0);
+    midContainers4.angle = atan2(midContainers4.bbox_max.y - midContainers4.bbox_min.y, midContainers4.bbox_max.x - midContainers4.bbox_min.x);
+    bbox midContainers5;
+    midContainers5.bbox_min = glm::vec4(-3.5f, 0.0f, 11.3f, 0);
+    midContainers5.bbox_max = glm::vec4(-1.5f, 5.0f, 12.5f, 0);
+    midContainers5.angle = atan2(midContainers5.bbox_max.y - midContainers5.bbox_min.y, midContainers5.bbox_max.x - midContainers5.bbox_min.x);
+    bbox midContainers6;
+    midContainers6.bbox_min = glm::vec4(-3.5f, 0.0f, 7.0f, 0);
+    midContainers6.bbox_max = glm::vec4(-1.5f, 5.0f, 8.0f, 0);
+    midContainers6.angle = atan2(midContainers6.bbox_max.y - midContainers6.bbox_min.y, midContainers6.bbox_max.x - midContainers6.bbox_min.x);
 
-    bbox bunny;
-    bunny.bbox_min = glm::vec4(0.0f, 0.5f, -5.0f, 0);
-    bunny.bbox_max = glm::vec4(0.0f, 3.5f, -8.0f, 0);
-    bunny.angle = atan2(bunny.bbox_max.y - bunny.bbox_min.y, bunny.bbox_max.x - bunny.bbox_min.x);
 
     collisionList.push_back(wall1);
     collisionList.push_back(wall2);
@@ -492,8 +524,6 @@ int main(int argc, char* argv[])
     collisionList.push_back(midContainers4);
     collisionList.push_back(midContainers5);
     collisionList.push_back(midContainers6);
-
-    hitScanList.push_back(bunny);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
