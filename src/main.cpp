@@ -125,6 +125,11 @@ struct ObjModel
     }
 };
 
+struct BoundingSphere {
+    glm::vec3 center;
+    float radius;
+};
+
 struct bbox
 {
     glm::vec4    bbox_min;
@@ -184,6 +189,9 @@ void DrawCube(GLint render_as_black_uniform); // Desenha um cubo
 
 void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_black_uniform);
 void RenderWeapon(glm::mat4 pistol);
+
+bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere);
+
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -664,6 +672,14 @@ int main(int argc, char* argv[])
             }
         }
 
+        BoundingSphere sphere;
+        sphere.center = glm::vec3(-6.5f, 0.5f, 5.0f);
+        sphere.radius = 1.0f;
+
+        if(isPointInsideSphere(camera_position_c, sphere)) {
+            collisionBool = true;
+        }
+
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
@@ -1027,6 +1043,9 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         DrawVirtualObject("SideLeft");
         DrawVirtualObject("SideRight");
         DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
 
         model = Matrix_Identity();
         model = model * Matrix_Translate(-10.0f, -0.5f, 8.0f) * Matrix_Rotate_Y(-(PI/2)) * Matrix_Scale(0.005f, 0.005f, 0.005f);
@@ -1070,6 +1089,8 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         DrawVirtualObject("SideRight");
         DrawVirtualObject("TopPanel");
         DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
 
         model = Matrix_Identity();
         model = model * Matrix_Translate(-4.0f, -0.5f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
@@ -1218,6 +1239,8 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         DrawVirtualObject("SideRight");
         DrawVirtualObject("TopPanel");
         DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
 
         model = Matrix_Identity();
         model = model * Matrix_Translate(1.0f, 0.8f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
@@ -1288,6 +1311,12 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         glUniform1i(g_object_id_uniform, CAR);
         DrawVirtualObject("the_car");
         
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-6.5f, 0.5f, 5.0f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_sphere");
+
         /* model = Matrix_Identity();
         model = Matrix_Translate(7.0f, -0.5f, 16.5f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.7f, 0.7f, 0.7f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -1334,6 +1363,14 @@ bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_m
         return false; // No collision along Z-axis
 
     return true;
+}
+
+bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere) {
+    // Calcula a distância entre o ponto e o centro da esfera
+    float distance = glm::length(point - sphere.center);
+
+    // Compara a distância com o raio da esfera
+    return distance <= sphere.radius + 0.3f;
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
