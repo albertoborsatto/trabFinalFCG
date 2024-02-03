@@ -66,6 +66,7 @@
 #define FERRARI 12
 #define FENCE 13
 #define CAR2 14
+#define TARGET 15
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -156,6 +157,7 @@ void LoadShader(const char* filename, GLuint shader_id); // Função utilizada p
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
 bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_max);
+bool isVectorIntersectingBox(const bbox& bbox, const glm::vec4& vector_origin, const glm::vec4& vector_direction);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -317,6 +319,12 @@ float prev_time;
 
 bool collisionBool = false;
 
+bool target1 = false;
+bool target2 = false;
+bool target3 = false;
+
+bool atirando = false;
+
 int main(int argc, char* argv[])
 {
     // Inicializamos a biblioteca GLFW, utilizada para criar uma janela do
@@ -402,6 +410,7 @@ int main(int argc, char* argv[])
         LoadTextureImage("../../data/trash.jpg");
         LoadTextureImage("../../data/silver_container.jpg");
         LoadTextureImage("../../data/texture.jpg");
+        LoadTextureImage("../../data/target.jpg");
 
     // Construímos a representação de um triângulo
     GLuint vertex_array_object_id = BuildTriangles();
@@ -462,6 +471,10 @@ int main(int argc, char* argv[])
     ObjModel trashmodel("../../data/Garbage_Container_.obj");
     ComputeNormals(&trashmodel);
     BuildTrianglesAndAddToVirtualScene(&trashmodel);
+
+    ObjModel targetmodel("../../data/target.obj");
+    ComputeNormals(&targetmodel);
+    BuildTrianglesAndAddToVirtualScene(&targetmodel);
 
     if ( argc > 1 )
     {
@@ -542,6 +555,25 @@ int main(int argc, char* argv[])
     collisionList.push_back(midContainers8);
     collisionList.push_back(midContainers9);
     collisionList.push_back(midContainers10);
+
+    std::vector<bbox> hitscanList;
+
+    bbox alvo1;
+    alvo1.bbox_min = glm::vec4(0.0f, 0.0f, 10.0f, 0);
+    alvo1.bbox_max = glm::vec4(0.0f, 0.0f, 10.0f, 0);
+    alvo1.angle = atan2(alvo1.bbox_max.y - alvo1.bbox_min.y, alvo1.bbox_max.x - alvo1.bbox_min.x);
+    bbox alvo2;
+    alvo2.bbox_min = glm::vec4(-1.5f, 0.75f, 17.0f, 0);
+    alvo2.bbox_max = glm::vec4(-1.5f, 0.75f, 17.0f, 0);
+    alvo2.angle = atan2(alvo2.bbox_max.y - alvo2.bbox_min.y, alvo2.bbox_max.x - alvo2.bbox_min.x);
+    bbox alvo3;
+    alvo3.bbox_min = glm::vec4(8.5f, -0.5f, 1.5f, 0);
+    alvo3.bbox_max = glm::vec4(8.5f, -0.5f, 1.5f, 0);
+    alvo3.angle = atan2(alvo3.bbox_max.y - alvo3.bbox_min.y, alvo3.bbox_max.x - alvo3.bbox_min.x);
+
+    hitscanList.push_back(alvo1);
+    hitscanList.push_back(alvo2);
+    hitscanList.push_back(alvo3);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -680,6 +712,23 @@ int main(int argc, char* argv[])
             collisionBool = true;
         }
 
+        for(int i {0}; i<hitscanList.size(); i++) {
+            if(isVectorIntersectingBox(hitscanList[i], camera_position_c, camera_view_vector) && atirando == true) {
+                target1 = true;
+            }
+        }
+        
+        if(isVectorIntersectingBox(hitscanList[0], camera_position_c, camera_view_vector) && atirando == true) {
+            target1 = true;
+        }
+
+        if(isVectorIntersectingBox(hitscanList[1], camera_position_c, camera_view_vector) && atirando == true) {
+            target2 = true;
+        }
+
+        if(isVectorIntersectingBox(hitscanList[2], camera_position_c, camera_view_vector) && atirando == true) {
+            target3 = true;
+        }
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
@@ -1317,6 +1366,30 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         glUniform1i(g_object_id_uniform, SPHERE);
         DrawVirtualObject("the_sphere");
 
+        if(target1==false){
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(0.0f, -0.5f, 10.0f) * Matrix_Rotate_X(-PI/2) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, TARGET);
+            DrawVirtualObject("target");
+        }
+
+        if(target2==false){
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-1.5f, 0.75f, 17.0f) * Matrix_Rotate_X(-PI/2) * Matrix_Rotate_Z(PI) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, TARGET);
+            DrawVirtualObject("target");
+        }
+
+        if(target3==false){
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(8.5f, -0.5f, 1.5f) * Matrix_Rotate_X(-PI/2) * Matrix_Rotate_Z(-PI/3) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, TARGET);
+            DrawVirtualObject("target");
+        }
+
         /* model = Matrix_Identity();
         model = Matrix_Translate(7.0f, -0.5f, 16.5f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.7f, 0.7f, 0.7f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -1329,8 +1402,7 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         glUniform1i(g_object_id_uniform, CAR);
         DrawVirtualObject("Cylinder_Cylinder.016");
         DrawVirtualObject("Cylinder.002_Cylinder.023");
-        DrawVirtualObject("Cylinder.003_Cylinder.024");     
-
+        DrawVirtualObject("Cylinder.003_Cylinder.024");
 }
 
 void RenderWeapon(glm::mat4 weapon) {
@@ -1371,6 +1443,21 @@ bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere) {
 
     // Compara a distância com o raio da esfera
     return distance <= sphere.radius + 0.3f;
+}
+
+bool isVectorIntersectingBox(const bbox& bbox, const glm::vec4& vector_origin, const glm::vec4& vector_direction) {
+    // Calcular os parâmetros de interseção ao longo do eixo x e y
+    float t_xmin = (bbox.bbox_min.x - vector_origin.x) / vector_direction.x;
+    float t_xmax = (bbox.bbox_max.x - vector_origin.x) / vector_direction.x;
+    float t_ymin = (bbox.bbox_min.y - vector_origin.y) / vector_direction.y;
+    float t_ymax = (bbox.bbox_max.y - vector_origin.y) / vector_direction.y;
+
+    // Verificar se há interseção nos eixos x e y
+    bool intersectX = (t_xmin <= 1.0f && t_xmax >= 0.0f);
+    bool intersectY = (t_ymin <= 1.0f && t_ymax >= 0.0f);
+
+    // Se houver interseção nos dois eixos, considerar como uma interseção
+    return intersectX && intersectY;
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
@@ -1506,6 +1593,7 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
     glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage11"), 11);
     glUseProgram(0);
 }
 
@@ -1933,6 +2021,22 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
         // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
         // variável abaixo para false.
         g_MiddleMouseButtonPressed = false;
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        // Se o usuário pressionou o botão esquerdo do mouse, guardamos a
+        // posição atual do cursor nas variáveis g_LastCursorPosX e
+        // g_LastCursorPosY.  Também, setamos a variável
+        // g_RightMouseButtonPressed como true, para saber que o usuário está
+        // com o botão esquerdo pressionado.
+        glfwGetCursorPos(window, &g_LastCursorPosX, &g_LastCursorPosY);
+        atirando = true;
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
+        // variável abaixo para false.
+        atirando = false;
     }
 }
 
