@@ -37,6 +37,7 @@ uniform int flashlightOn;
 #define FERRARI 12
 #define FENCE 13
 #define CAR2 14
+#define TARGET 15
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -55,6 +56,7 @@ uniform sampler2D TextureImage7;
 uniform sampler2D TextureImage8;
 uniform sampler2D TextureImage9;
 uniform sampler2D TextureImage10;
+uniform sampler2D TextureImage11;
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec4 color;
@@ -114,12 +116,54 @@ void main()
     
     if ( object_id == SPHERE )
     {
-        // PREENCHA AQUI
-        // Propriedades espectrais da esfera
-        Kd = vec3(0.8,0.4,0.08);
-        Ks = vec3(0.0,0.0,0.0);
-        Ka = vec3(0.4,0.2,0.04);
-        q = 1.0;
+        // PREENCHA AQUI as coordenadas de textura da esfera, computadas com
+        // projeção esférica EM COORDENADAS DO MODELO. Utilize como referência
+        // o slides 134-150 do documento Aula_20_Mapeamento_de_Texturas.pdf.
+        // A esfera que define a projeção deve estar centrada na posição
+        // "bbox_center" definida abaixo.
+
+        // Você deve utilizar:
+        //   função 'length( )' : comprimento Euclidiano de um vetor
+        //   função 'atan( , )' : arcotangente. Veja https://en.wikipedia.org/wiki/Atan2.
+        //   função 'asin( )'   : seno inverso.
+        //   constante M_PI
+        //   variável position_model
+
+        vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
+
+        vec4 vetor_p = normalize(position_model - bbox_center);
+        float theta = atan(vetor_p[0], vetor_p[2]);
+        float phi = asin(vetor_p[1]);
+
+        U = (theta+M_PI)/(2*M_PI);
+        V = (phi+M_PI/2)/M_PI;
+
+        // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
+        vec3 Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
+
+        // Equação de Iluminação
+        float lambert = max(0,dot(n,l));
+
+        color.rgb = Kd0 * (lambert + 0.01);
+
+        // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
+        // necessário:
+        // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
+        //    desenho dos objetos transparentes, com os comandos abaixo no código C++:
+        //      glEnable(GL_BLEND);
+        //      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // 2) Realizar o desenho de todos objetos transparentes após ter desenhado
+        //    todos os objetos opacos; e
+        // 3) Realizar o desenho de objetos transparentes ordenados de acordo com
+        //    suas distâncias para a câmera (desenhando primeiro objetos
+        //    transparentes que estão mais longe da câmera).
+        // Alpha default = 1 = 100% opaco = 0% transparente
+        color.a = 1;
+
+        // Cor final com correção gamma, considerando monitor sRGB.
+        // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
+        color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
+        return;
     }
     else if ( object_id == BUNNY )
     {
@@ -468,6 +512,37 @@ void main()
         Ks = vec3(0.0,0.0,0.0);
         Ka = vec3(0.0,0.0,0.0);
         q = 1.0;
+    }
+    else if( object_id == TARGET ) {
+        // Coordenadas de textura do plano, obtidas do arquivo OBJ.
+        U = texcoords.x;
+        V = texcoords.y;
+
+        vec3 Kd0 = texture(TextureImage11, vec2(U,V)).rgb;
+
+        // Equação de Iluminação
+        float lambert = max(0,dot(n,l));
+
+        color.rgb = Kd0 * (lambert + 0.01);
+
+        // NOTE: Se você quiser fazer o rendering de objetos transparentes, é
+        // necessário:
+        // 1) Habilitar a operação de "blending" de OpenGL logo antes de realizar o
+        //    desenho dos objetos transparentes, com os comandos abaixo no código C++:
+        //      glEnable(GL_BLEND);
+        //      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        // 2) Realizar o desenho de todos objetos transparentes após ter desenhado
+        //    todos os objetos opacos; e
+        // 3) Realizar o desenho de objetos transparentes ordenados de acordo com
+        //    suas distâncias para a câmera (desenhando primeiro objetos
+        //    transparentes que estão mais longe da câmera).
+        // Alpha default = 1 = 100% opaco = 0% transparente
+        color.a = 1;
+
+        // Cor final com correção gamma, considerando monitor sRGB.
+        // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
+        color.rgb = pow(color.rgb, vec3(1.0,1.0,1.0)/2.2);
+        return;
     }
     else // Objeto desconhecido = preto
     {
