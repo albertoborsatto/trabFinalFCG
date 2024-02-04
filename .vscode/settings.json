@@ -51,6 +51,7 @@
         "cinttypes": "cpp",
         "chrono": "cpp",
         "ratio": "cpp",
-        "cstring": "cpp"
+        "cstring": "cpp",
+        "set": "cpp"
     }
 }

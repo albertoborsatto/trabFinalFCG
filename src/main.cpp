@@ -48,6 +48,7 @@
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
+#include "collisions.h"
 
 #define PI 3.14159265358979323846f
 
@@ -127,18 +128,6 @@ struct ObjModel
     }
 };
 
-struct BoundingSphere {
-    glm::vec3 center;
-    float radius;
-};
-
-struct bbox
-{
-    glm::vec4    bbox_min;
-    glm::vec4    bbox_max;
-};
-
-
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
 void PopMatrix(glm::mat4& M);
@@ -156,8 +145,6 @@ GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
 void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
-bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_max);
-bool isVectorIntersectingBox(const bbox& bbox, const glm::vec4& vector_origin, const glm::vec4& vector_direction);
 glm::vec4 Bezier(const std::vector<glm::vec4>& pontosDeControle, float t);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
@@ -192,8 +179,6 @@ void DrawCube(GLint render_as_black_uniform); // Desenha um cubo
 
 void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_black_uniform);
 void RenderWeapon(glm::mat4 pistol);
-
-bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere);
 
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
@@ -275,6 +260,7 @@ bool free_Camera = true;
 bool load_coordinates = true;
 bool noclip = false;
 bool pistol_Current = false;
+bool collisionBool = false;
 int flashlight_On = 0;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
@@ -317,8 +303,6 @@ glm::vec4 camera_up_vector;
 float delta_t;
 float speed;
 float prev_time;
-
-bool collisionBool = false;
 
 bool target1 = false;
 bool target2 = false;
@@ -487,8 +471,6 @@ int main(int argc, char* argv[])
         BuildTrianglesAndAddToVirtualScene(&model);
     }
 
-    std::vector<bbox> collisionList;
-
     bbox wall1;
     wall1.bbox_min = glm::vec4(-10.0f, 0.0f, -0.5f, 0);
     wall1.bbox_max = glm::vec4(10.0f, 2.5f, -0.5f, 0);
@@ -553,6 +535,7 @@ int main(int argc, char* argv[])
     trashCan1.bbox_min = glm::vec4(2.6f, 0.0f, 0.0f, 0);
     trashCan1.bbox_max = glm::vec4(3.6f, 0.5f, 0.5f, 0);
     
+    std::vector<bbox> collisionList;
 
     collisionList.push_back(wall1);
     collisionList.push_back(wall2);
@@ -571,8 +554,7 @@ int main(int argc, char* argv[])
     collisionList.push_back(midContainers11);
     collisionList.push_back(trashCan1);
 
-    std::vector<bbox> hitscanList;
-
+    
     bbox alvo1;
     alvo1.bbox_min = glm::vec4(0.0f, 0.0f, 10.0f, 0);
     alvo1.bbox_max = glm::vec4(0.0f, 0.0f, 10.0f, 0);
@@ -584,7 +566,8 @@ int main(int argc, char* argv[])
     bbox alvo3;
     alvo3.bbox_min = glm::vec4(8.5f, -0.5f, 1.5f, 0);
     alvo3.bbox_max = glm::vec4(8.5f, -0.5f, 1.5f, 0);
-   
+    
+    std::vector<bbox> hitscanList;
 
     hitscanList.push_back(alvo1);
     hitscanList.push_back(alvo2);
@@ -834,7 +817,7 @@ int main(int argc, char* argv[])
         // pela biblioteca GLFW.
         glfwPollEvents();
 
-        std::cout << camera_position_c.x << " " << camera_position_c.y << " " << camera_position_c.z << std::endl;
+        //std::cout << camera_position_c.x << " " << camera_position_c.y << " " << camera_position_c.z << std::endl;
     }
 
     // Finalizamos o uso dos recursos do sistema operacional
@@ -1476,43 +1459,6 @@ glm::vec4 Bezier(const std::vector<glm::vec4>& pontosDeControle, float t)
 
         1.0f
     );
-}
-
-bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_max)
-{
-    if (position.x < hitbox_min.x || position.x > hitbox_max.x)
-        return false; // No collision along X-axis
-
-    if (position.y < hitbox_min.y || position.y > hitbox_max.y)
-        return false; // No collision along Y-axis
-
-    if (position.z < hitbox_min.z || position.z > hitbox_max.z)
-        return false; // No collision along Z-axis
-
-    return true;
-}
-
-bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere) {
-    // Calcula a distância entre o ponto e o centro da esfera
-    float distance = glm::length(point - sphere.center);
-
-    // Compara a distância com o raio da esfera
-    return distance <= sphere.radius + 0.3f;
-}
-
-bool isVectorIntersectingBox(const bbox& bbox, const glm::vec4& vector_origin, const glm::vec4& vector_direction) {
-    // Calcular os parâmetros de interseção ao longo do eixo x e y
-    float t_xmin = (bbox.bbox_min.x - vector_origin.x) / vector_direction.x;
-    float t_xmax = (bbox.bbox_max.x - vector_origin.x) / vector_direction.x;
-    float t_ymin = (bbox.bbox_min.y - vector_origin.y) / vector_direction.y;
-    float t_ymax = (bbox.bbox_max.y - vector_origin.y) / vector_direction.y;
-
-    // Verificar se há interseção nos eixos x e y
-    bool intersectX = (t_xmin <= 1.0f && t_xmax >= 0.0f);
-    bool intersectY = (t_ymin <= 1.0f && t_ymax >= 0.0f);
-
-    // Se houver interseção nos dois eixos, considerar como uma interseção
-    return intersectX && intersectY;
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
