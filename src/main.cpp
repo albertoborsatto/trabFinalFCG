@@ -136,7 +136,6 @@ struct bbox
 {
     glm::vec4    bbox_min;
     glm::vec4    bbox_max;
-    double       angle;
 };
 
 
@@ -493,59 +492,63 @@ int main(int argc, char* argv[])
     bbox wall1;
     wall1.bbox_min = glm::vec4(-10.0f, 0.0f, -0.5f, 0);
     wall1.bbox_max = glm::vec4(10.0f, 5.0f, -0.5f, 0);
-    wall1.angle = atan2(wall1.bbox_max.y - wall1.bbox_min.y, wall1.bbox_max.x - wall1.bbox_min.x);
+    
     bbox wall2;
     wall2.bbox_min = glm::vec4(-10.0f, 0.0f, 20.5f, 0);
     wall2.bbox_max = glm::vec4(10.0f, 5.0f, 20.5f, 0);
-    wall2.angle = atan2(wall2.bbox_max.y - wall2.bbox_min.y, wall2.bbox_max.x - wall2.bbox_min.x);
+    
     bbox wall3;
     wall3.bbox_min = glm::vec4(10.5f, 0.0f, 0.0f, 0);
     wall3.bbox_max = glm::vec4(10.5f, 5.0f, 20.0f, 0);
-    wall3.angle = atan2(wall3.bbox_max.y - wall3.bbox_min.y, wall3.bbox_max.x - wall3.bbox_min.x);
+    
     bbox wall4;
     wall4.bbox_min = glm::vec4(-10.5f, 0.0f, 0.0f, 0);
     wall4.bbox_max = glm::vec4(-10.5f, 5.0f, 20.0f, 0);
-    wall4.angle = atan2(wall4.bbox_max.y - wall4.bbox_min.y, wall4.bbox_max.x - wall4.bbox_min.x);
+    
     bbox midContainers1;
     midContainers1.bbox_min = glm::vec4(3.5f, 0.0f, 6.5f, 0);
     midContainers1.bbox_max = glm::vec4(3.5f, 5.0f, 7.8f, 0);
-    midContainers1.angle = atan2(midContainers1.bbox_max.y - midContainers1.bbox_min.y, midContainers1.bbox_max.x - midContainers1.bbox_min.x);
+    
     bbox midContainers2;
     midContainers2.bbox_min = glm::vec4(1.5f, 0.0f, 7.1f, 0);
     midContainers2.bbox_max = glm::vec4(3.5f, 5.0f, 7.1f, 0);
-    midContainers2.angle = atan2(midContainers2.bbox_max.y - midContainers2.bbox_min.y, midContainers2.bbox_max.x - midContainers2.bbox_min.x);
+    
     bbox midContainers3;
     midContainers3.bbox_min = glm::vec4(1.5f, 0.0f, 8.2f, 0);
     midContainers3.bbox_max = glm::vec4(3.5f, 5.0f, 8.2f, 0);
-    midContainers3.angle = atan2(midContainers3.bbox_max.y - midContainers3.bbox_min.y, midContainers3.bbox_max.x - midContainers3.bbox_min.x);
+    
     bbox midContainers4;
     midContainers4.bbox_min = glm::vec4(1.5f, 0.0f, 11.3f, 0);
     midContainers4.bbox_max = glm::vec4(3.5f, 5.0f, 12.5f, 0);
-    midContainers4.angle = atan2(midContainers4.bbox_max.y - midContainers4.bbox_min.y, midContainers4.bbox_max.x - midContainers4.bbox_min.x);
+    
     bbox midContainers5;
     midContainers5.bbox_min = glm::vec4(-3.5f, 0.0f, 11.3f, 0);
     midContainers5.bbox_max = glm::vec4(-1.5f, 5.0f, 12.5f, 0);
-    midContainers5.angle = atan2(midContainers5.bbox_max.y - midContainers5.bbox_min.y, midContainers5.bbox_max.x - midContainers5.bbox_min.x);
+    
     bbox midContainers6;
     midContainers6.bbox_min = glm::vec4(-3.5f, 0.0f, 7.0f, 0);
     midContainers6.bbox_max = glm::vec4(-1.5f, 5.0f, 8.0f, 0);
-    midContainers6.angle = atan2(midContainers6.bbox_max.y - midContainers6.bbox_min.y, midContainers6.bbox_max.x - midContainers6.bbox_min.x);
+    
     bbox midContainers7;
     midContainers7.bbox_min = glm::vec4(-2.0f, 0.0f, 1.0f, 0);
     midContainers7.bbox_max = glm::vec4(0.2f, 5.0f, 2.0f, 0);
-    midContainers7.angle = atan2(midContainers7.bbox_max.y - midContainers7.bbox_min.y, midContainers7.bbox_max.x - midContainers7.bbox_min.x);
+    
     bbox midContainers8;
     midContainers8.bbox_min = glm::vec4(-10.0f, 0.0f, 8.5f, 0);
     midContainers8.bbox_max = glm::vec4(-8.0f, 5.0f, 10.5f, 0);
-    midContainers8.angle = atan2(midContainers8.bbox_max.y - midContainers8.bbox_min.y, midContainers8.bbox_max.x - midContainers8.bbox_min.x);
+    
     bbox midContainers9;
     midContainers9.bbox_min = glm::vec4(-1.5f, 0.0f, 16.6f, 0);
     midContainers9.bbox_max = glm::vec4(0.5f, 5.0f, 16.6f, 0);
-    midContainers9.angle = atan2(midContainers9.bbox_max.y - midContainers9.bbox_min.y, midContainers9.bbox_max.x - midContainers9.bbox_min.x);
+    
     bbox midContainers10;
     midContainers10.bbox_min = glm::vec4(-1.5f, 0.0f, 19.5f, 0);
     midContainers10.bbox_max = glm::vec4(0.5f, 5.0f, 19.5f, 0);
-    midContainers10.angle = atan2(midContainers10.bbox_max.y - midContainers10.bbox_min.y, midContainers10.bbox_max.x - midContainers10.bbox_min.x);
+
+    bbox trashCan1;
+    trashCan1.bbox_min = glm::vec4(2.6f, 0.0f, 0.0f, 0);
+    trashCan1.bbox_max = glm::vec4(3.6f, 0.5f, 0.5f, 0);
+    
 
     collisionList.push_back(wall1);
     collisionList.push_back(wall2);
@@ -561,21 +564,22 @@ int main(int argc, char* argv[])
     collisionList.push_back(midContainers8);
     collisionList.push_back(midContainers9);
     collisionList.push_back(midContainers10);
+    collisionList.push_back(trashCan1);
 
     std::vector<bbox> hitscanList;
 
     bbox alvo1;
     alvo1.bbox_min = glm::vec4(0.0f, 0.0f, 10.0f, 0);
     alvo1.bbox_max = glm::vec4(0.0f, 0.0f, 10.0f, 0);
-    alvo1.angle = atan2(alvo1.bbox_max.y - alvo1.bbox_min.y, alvo1.bbox_max.x - alvo1.bbox_min.x);
+
     bbox alvo2;
     alvo2.bbox_min = glm::vec4(-1.5f, 0.75f, 17.0f, 0);
     alvo2.bbox_max = glm::vec4(-1.5f, 0.75f, 17.0f, 0);
-    alvo2.angle = atan2(alvo2.bbox_max.y - alvo2.bbox_min.y, alvo2.bbox_max.x - alvo2.bbox_min.x);
+    
     bbox alvo3;
     alvo3.bbox_min = glm::vec4(8.5f, -0.5f, 1.5f, 0);
     alvo3.bbox_max = glm::vec4(8.5f, -0.5f, 1.5f, 0);
-    alvo3.angle = atan2(alvo3.bbox_max.y - alvo3.bbox_min.y, alvo3.bbox_max.x - alvo3.bbox_min.x);
+   
 
     hitscanList.push_back(alvo1);
     hitscanList.push_back(alvo2);
@@ -699,10 +703,10 @@ int main(int argc, char* argv[])
             wallHitbox.bbox_min = collisionList[i].bbox_min;
             wallHitbox.bbox_max = collisionList[i].bbox_max;
 
-            wallHitbox.bbox_max.x+=1;
-            wallHitbox.bbox_min.x-=1;
-            wallHitbox.bbox_max.z+=1;
-            wallHitbox.bbox_min.z-=1;
+            wallHitbox.bbox_max.x+=0.8f;
+            wallHitbox.bbox_min.x-=0.8f;
+            wallHitbox.bbox_max.z+=0.8f;
+            wallHitbox.bbox_min.z-=0.8f;
 
             if(detectColision(camera_position_c, wallHitbox.bbox_min, wallHitbox.bbox_max))
             {
@@ -825,7 +829,7 @@ int main(int argc, char* argv[])
         // pela biblioteca GLFW.
         glfwPollEvents();
 
-        //std::cout << camera_position_c.x << " " << camera_position_c.y << " " << camera_position_c.z << std::endl;
+        std::cout << camera_position_c.x << " " << camera_position_c.y << " " << camera_position_c.z << std::endl;
     }
 
     // Finalizamos o uso dos recursos do sistema operacional
@@ -1340,12 +1344,12 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         DrawVirtualObject("Cube");
 
         model = Matrix_Identity();
-        model = Matrix_Translate(5.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        model = Matrix_Translate(3.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TRASH);
         DrawVirtualObject("Cube");
         model = Matrix_Identity();
-        model = Matrix_Translate(4.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        model = Matrix_Translate(2.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, TRASH);
         DrawVirtualObject("Cube");
@@ -1378,7 +1382,6 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
         if(t < 0.0f)
             t *= -1.0f;
 
-        std::cout << t << std::endl;
         glm::vec4 ufoTranslate = Bezier(controlPoints, t);
 
         model = Matrix_Identity();
