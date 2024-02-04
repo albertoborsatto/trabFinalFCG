@@ -491,59 +491,63 @@ int main(int argc, char* argv[])
 
     bbox wall1;
     wall1.bbox_min = glm::vec4(-10.0f, 0.0f, -0.5f, 0);
-    wall1.bbox_max = glm::vec4(10.0f, 5.0f, -0.5f, 0);
+    wall1.bbox_max = glm::vec4(10.0f, 2.5f, -0.5f, 0);
     
     bbox wall2;
     wall2.bbox_min = glm::vec4(-10.0f, 0.0f, 20.5f, 0);
-    wall2.bbox_max = glm::vec4(10.0f, 5.0f, 20.5f, 0);
+    wall2.bbox_max = glm::vec4(10.0f, 2.5f, 20.5f, 0);
     
     bbox wall3;
     wall3.bbox_min = glm::vec4(10.5f, 0.0f, 0.0f, 0);
-    wall3.bbox_max = glm::vec4(10.5f, 5.0f, 20.0f, 0);
+    wall3.bbox_max = glm::vec4(10.5f, 2.5f, 20.0f, 0);
     
     bbox wall4;
     wall4.bbox_min = glm::vec4(-10.5f, 0.0f, 0.0f, 0);
-    wall4.bbox_max = glm::vec4(-10.5f, 5.0f, 20.0f, 0);
+    wall4.bbox_max = glm::vec4(-10.5f, 2.5f, 20.0f, 0);
     
     bbox midContainers1;
     midContainers1.bbox_min = glm::vec4(3.5f, 0.0f, 6.5f, 0);
-    midContainers1.bbox_max = glm::vec4(3.5f, 5.0f, 7.8f, 0);
+    midContainers1.bbox_max = glm::vec4(3.5f, 2.5f, 7.8f, 0);
     
     bbox midContainers2;
     midContainers2.bbox_min = glm::vec4(1.5f, 0.0f, 7.1f, 0);
-    midContainers2.bbox_max = glm::vec4(3.5f, 5.0f, 7.1f, 0);
+    midContainers2.bbox_max = glm::vec4(3.5f, 2.5f, 7.1f, 0);
     
     bbox midContainers3;
     midContainers3.bbox_min = glm::vec4(1.5f, 0.0f, 8.2f, 0);
-    midContainers3.bbox_max = glm::vec4(3.5f, 5.0f, 8.2f, 0);
+    midContainers3.bbox_max = glm::vec4(3.5f, 2.5f, 8.2f, 0);
     
     bbox midContainers4;
     midContainers4.bbox_min = glm::vec4(1.5f, 0.0f, 11.3f, 0);
-    midContainers4.bbox_max = glm::vec4(3.5f, 5.0f, 12.5f, 0);
+    midContainers4.bbox_max = glm::vec4(3.5f, 1.25f, 12.5f, 0);
     
     bbox midContainers5;
     midContainers5.bbox_min = glm::vec4(-3.5f, 0.0f, 11.3f, 0);
-    midContainers5.bbox_max = glm::vec4(-1.5f, 5.0f, 12.5f, 0);
+    midContainers5.bbox_max = glm::vec4(-1.5f, 2.5f, 12.5f, 0);
     
     bbox midContainers6;
     midContainers6.bbox_min = glm::vec4(-3.5f, 0.0f, 7.0f, 0);
-    midContainers6.bbox_max = glm::vec4(-1.5f, 5.0f, 8.0f, 0);
+    midContainers6.bbox_max = glm::vec4(-1.5f, 1.25f, 8.0f, 0);
     
     bbox midContainers7;
     midContainers7.bbox_min = glm::vec4(-2.0f, 0.0f, 1.0f, 0);
-    midContainers7.bbox_max = glm::vec4(0.2f, 5.0f, 2.0f, 0);
+    midContainers7.bbox_max = glm::vec4(0.2f, 1.25f, 2.0f, 0);
     
     bbox midContainers8;
     midContainers8.bbox_min = glm::vec4(-10.0f, 0.0f, 8.5f, 0);
-    midContainers8.bbox_max = glm::vec4(-8.0f, 5.0f, 10.5f, 0);
+    midContainers8.bbox_max = glm::vec4(-8.0f, 1.25f, 10.5f, 0);
     
     bbox midContainers9;
     midContainers9.bbox_min = glm::vec4(-1.5f, 0.0f, 16.6f, 0);
-    midContainers9.bbox_max = glm::vec4(0.5f, 5.0f, 16.6f, 0);
+    midContainers9.bbox_max = glm::vec4(0.5f, 1.25f, 16.8f, 0);
     
     bbox midContainers10;
     midContainers10.bbox_min = glm::vec4(-1.5f, 0.0f, 19.5f, 0);
-    midContainers10.bbox_max = glm::vec4(0.5f, 5.0f, 19.5f, 0);
+    midContainers10.bbox_max = glm::vec4(0.5f, 1.25f, 19.5f, 0);
+
+    bbox midContainers11;
+    midContainers11.bbox_min = glm::vec4(-1.5f, 1.25f, 18.0f, 0);
+    midContainers11.bbox_max = glm::vec4(0.5f, 1.25f, 19.0f, 0);
 
     bbox trashCan1;
     trashCan1.bbox_min = glm::vec4(2.6f, 0.0f, 0.0f, 0);
@@ -564,6 +568,7 @@ int main(int argc, char* argv[])
     collisionList.push_back(midContainers8);
     collisionList.push_back(midContainers9);
     collisionList.push_back(midContainers10);
+    collisionList.push_back(midContainers11);
     collisionList.push_back(trashCan1);
 
     std::vector<bbox> hitscanList;
