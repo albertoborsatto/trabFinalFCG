@@ -556,16 +556,16 @@ int main(int argc, char* argv[])
 
     
     bbox alvo1;
-    alvo1.bbox_min = glm::vec4(0.0f, 0.0f, 10.0f, 0);
-    alvo1.bbox_max = glm::vec4(0.0f, 0.0f, 10.0f, 0);
+    alvo1.bbox_min = glm::vec4(-0.3f, 0.0f, 9.5f, 0);
+    alvo1.bbox_max = glm::vec4(0.5f, 0.5f, 10.0f, 0);
 
     bbox alvo2;
-    alvo2.bbox_min = glm::vec4(-1.5f, 0.75f, 17.0f, 0);
-    alvo2.bbox_max = glm::vec4(-1.5f, 0.75f, 17.0f, 0);
+    alvo2.bbox_min = glm::vec4(-1.9f, 1.25f, 16.7f, 0);
+    alvo2.bbox_max = glm::vec4(-1.15f, 1.75f, 17.5f, 0);
     
     bbox alvo3;
-    alvo3.bbox_min = glm::vec4(8.5f, -0.5f, 1.5f, 0);
-    alvo3.bbox_max = glm::vec4(8.5f, -0.5f, 1.5f, 0);
+    alvo3.bbox_min = glm::vec4(7.9f, 0.0f, 1.15f, 0);
+    alvo3.bbox_max = glm::vec4(8.7f, 0.5f, 2.15f, 0);
     
     std::vector<bbox> hitscanList;
 
@@ -713,15 +713,15 @@ int main(int argc, char* argv[])
             }
         }
 
-       if(isVectorIntersectingBox(hitscanList[0], camera_position_c, camera_view_vector) && atirando == true) {
+       if(isVectorIntersectingBox(hitscanList[0], camera_position_c, camera_view_vector) && atirando) {
             target1 = true;
         }
 
-        if(isVectorIntersectingBox(hitscanList[1], camera_position_c, camera_view_vector) && atirando == true) {
+        if(isVectorIntersectingBox(hitscanList[1], camera_position_c, camera_view_vector) && atirando) {
             target2 = true;
         }
 
-        if(isVectorIntersectingBox(hitscanList[2], camera_position_c, camera_view_vector) && atirando == true) {
+        if(isVectorIntersectingBox(hitscanList[2], camera_position_c, camera_view_vector) && atirando) {
             target3 = true;
         }
 

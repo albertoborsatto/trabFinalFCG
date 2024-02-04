@@ -23,16 +23,21 @@ bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere) {
 }
 
 bool isVectorIntersectingBox(const bbox& bbox, const glm::vec4& vector_origin, const glm::vec4& vector_direction) {
-    // Calcular os parâmetros de interseção ao longo do eixo x e y
+    // Calcular os parâmetros de interseção ao longo do eixo x, y e z
     float t_xmin = (bbox.bbox_min.x - vector_origin.x) / vector_direction.x;
     float t_xmax = (bbox.bbox_max.x - vector_origin.x) / vector_direction.x;
     float t_ymin = (bbox.bbox_min.y - vector_origin.y) / vector_direction.y;
     float t_ymax = (bbox.bbox_max.y - vector_origin.y) / vector_direction.y;
+    float t_zmin = (bbox.bbox_min.z - vector_origin.z) / vector_direction.z;
+    float t_zmax = (bbox.bbox_max.z - vector_origin.z) / vector_direction.z;
 
-    // Verificar se há interseção nos eixos x e y
-    bool intersectX = (t_xmin <= 1.0f && t_xmax >= 0.0f);
-    bool intersectY = (t_ymin <= 1.0f && t_ymax >= 0.0f);
+    // Encontrar os valores mínimos e máximos para os parâmetros de interseção
+    float tmin = std::max(std::max(std::min(t_xmin, t_xmax), std::min(t_ymin, t_ymax)), std::min(t_zmin, t_zmax));
+    float tmax = std::min(std::min(std::max(t_xmin, t_xmax), std::max(t_ymin, t_ymax)), std::max(t_zmin, t_zmax));
 
-    // Se houver interseção nos dois eixos, considerar como uma interseção
-    return intersectX && intersectY;
+    // Verificar se há interseção em algum dos eixos
+    bool intersect = (tmin <= tmax && tmax >= 0.0f);
+
+    return intersect;
 }
+
