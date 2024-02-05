@@ -474,69 +474,106 @@ int main(int argc, char* argv[])
     bbox wall1;
     wall1.bbox_min = glm::vec4(-10.0f, 0.0f, -0.5f, 0);
     wall1.bbox_max = glm::vec4(10.0f, 2.5f, -0.5f, 0);
+    wall1.alive = true;
     
     bbox wall2;
     wall2.bbox_min = glm::vec4(-10.0f, 0.0f, 20.5f, 0);
     wall2.bbox_max = glm::vec4(10.0f, 2.5f, 20.5f, 0);
+    wall2.alive = true;
     
     bbox wall3;
     wall3.bbox_min = glm::vec4(10.5f, 0.0f, 0.0f, 0);
     wall3.bbox_max = glm::vec4(10.5f, 2.5f, 20.0f, 0);
+    wall3.alive = true;
     
     bbox wall4;
     wall4.bbox_min = glm::vec4(-10.5f, 0.0f, 0.0f, 0);
     wall4.bbox_max = glm::vec4(-10.5f, 2.5f, 20.0f, 0);
-    
+    wall4.alive = true;
+
     bbox midContainers1;
     midContainers1.bbox_min = glm::vec4(3.5f, 0.0f, 6.5f, 0);
     midContainers1.bbox_max = glm::vec4(3.5f, 2.5f, 7.8f, 0);
+    midContainers1.alive = true;
     
     bbox midContainers2;
     midContainers2.bbox_min = glm::vec4(1.5f, 0.0f, 7.1f, 0);
     midContainers2.bbox_max = glm::vec4(3.5f, 2.5f, 7.1f, 0);
+    midContainers2.alive = true;
     
     bbox midContainers3;
     midContainers3.bbox_min = glm::vec4(1.5f, 0.0f, 8.2f, 0);
     midContainers3.bbox_max = glm::vec4(3.5f, 2.5f, 8.2f, 0);
+    midContainers3.alive = true;
     
     bbox midContainers4;
     midContainers4.bbox_min = glm::vec4(1.5f, 0.0f, 11.3f, 0);
     midContainers4.bbox_max = glm::vec4(3.5f, 1.25f, 12.5f, 0);
+    midContainers4.alive = true;
+    
     
     bbox midContainers5;
     midContainers5.bbox_min = glm::vec4(-3.5f, 0.0f, 11.3f, 0);
     midContainers5.bbox_max = glm::vec4(-1.5f, 2.5f, 12.5f, 0);
+    midContainers5.alive = true;
+    
     
     bbox midContainers6;
     midContainers6.bbox_min = glm::vec4(-3.5f, 0.0f, 7.0f, 0);
     midContainers6.bbox_max = glm::vec4(-1.5f, 1.25f, 8.0f, 0);
+    midContainers6.alive = true;
+    
     
     bbox midContainers7;
     midContainers7.bbox_min = glm::vec4(-2.0f, 0.0f, 1.0f, 0);
     midContainers7.bbox_max = glm::vec4(0.2f, 1.25f, 2.0f, 0);
+    midContainers7.alive = true;
     
     bbox midContainers8;
     midContainers8.bbox_min = glm::vec4(-10.0f, 0.0f, 8.5f, 0);
     midContainers8.bbox_max = glm::vec4(-8.0f, 1.25f, 10.5f, 0);
+    midContainers8.alive = true;
     
     bbox midContainers9;
     midContainers9.bbox_min = glm::vec4(-1.5f, 0.0f, 16.6f, 0);
     midContainers9.bbox_max = glm::vec4(0.5f, 1.25f, 16.8f, 0);
+    midContainers9.alive = true;
     
     bbox midContainers10;
     midContainers10.bbox_min = glm::vec4(-1.5f, 0.0f, 19.5f, 0);
     midContainers10.bbox_max = glm::vec4(0.5f, 1.25f, 19.5f, 0);
-
+    midContainers10.alive = true;
+    
     bbox midContainers11;
     midContainers11.bbox_min = glm::vec4(-1.5f, 1.25f, 18.0f, 0);
-    midContainers11.bbox_max = glm::vec4(0.5f, 1.25f, 19.0f, 0);
-
+    midContainers11.bbox_max = glm::vec4(0.5f, 2.50f, 18.0f, 0);
+    midContainers11.alive = true;
+    
     bbox trashCan1;
     trashCan1.bbox_min = glm::vec4(2.6f, 0.0f, 0.0f, 0);
     trashCan1.bbox_max = glm::vec4(3.6f, 0.5f, 0.5f, 0);
+    trashCan1.alive = true;
     
+    bbox alvo1;
+    alvo1.bbox_min = glm::vec4(-0.3f, 0.0f, 9.5f, 0);
+    alvo1.bbox_max = glm::vec4(0.5f, 0.5f, 10.0f, 0);
+    alvo1.alive = true;
+
+    bbox alvo2;
+    alvo2.bbox_min = glm::vec4(-1.9f, 1.25f, 16.7f, 0);
+    alvo2.bbox_max = glm::vec4(-1.15f, 1.75f, 17.5f, 0);
+    alvo2.alive = true;
+
+    bbox alvo3;
+    alvo3.bbox_min = glm::vec4(7.9f, 0.0f, 1.15f, 0);
+    alvo3.bbox_max = glm::vec4(8.7f, 0.5f, 2.15f, 0);
+    alvo3.alive = true;
+
     std::vector<bbox> collisionList;
 
+    collisionList.push_back(alvo1);
+    collisionList.push_back(alvo2);
+    collisionList.push_back(alvo3);
     collisionList.push_back(wall1);
     collisionList.push_back(wall2);
     collisionList.push_back(wall3);
@@ -554,20 +591,7 @@ int main(int argc, char* argv[])
     collisionList.push_back(midContainers11);
     collisionList.push_back(trashCan1);
 
-    
-    bbox alvo1;
-    alvo1.bbox_min = glm::vec4(-0.3f, 0.0f, 9.5f, 0);
-    alvo1.bbox_max = glm::vec4(0.5f, 0.5f, 10.0f, 0);
-
-    bbox alvo2;
-    alvo2.bbox_min = glm::vec4(-1.9f, 1.25f, 16.7f, 0);
-    alvo2.bbox_max = glm::vec4(-1.15f, 1.75f, 17.5f, 0);
-    
-    bbox alvo3;
-    alvo3.bbox_min = glm::vec4(7.9f, 0.0f, 1.15f, 0);
-    alvo3.bbox_max = glm::vec4(8.7f, 0.5f, 2.15f, 0);
-    
-    std::vector<bbox> hitscanList;
+     std::vector<bbox> hitscanList;
 
     hitscanList.push_back(alvo1);
     hitscanList.push_back(alvo2);
@@ -690,13 +714,14 @@ int main(int argc, char* argv[])
             bbox wallHitbox;
             wallHitbox.bbox_min = collisionList[i].bbox_min;
             wallHitbox.bbox_max = collisionList[i].bbox_max;
+            wallHitbox.alive = collisionList[i].alive;
 
             wallHitbox.bbox_max.x+=0.8f;
             wallHitbox.bbox_min.x-=0.8f;
             wallHitbox.bbox_max.z+=0.8f;
             wallHitbox.bbox_min.z-=0.8f;
 
-            if(detectColision(camera_position_c, wallHitbox.bbox_min, wallHitbox.bbox_max))
+            if(detectColision(camera_position_c, wallHitbox.bbox_min, wallHitbox.bbox_max) && wallHitbox.alive)
             {
                 collisionBool=true;
             }
@@ -715,14 +740,17 @@ int main(int argc, char* argv[])
 
        if(isVectorIntersectingBox(hitscanList[0], camera_position_c, camera_view_vector) && atirando) {
             target1 = true;
+            collisionList[0].alive = false;
         }
 
         if(isVectorIntersectingBox(hitscanList[1], camera_position_c, camera_view_vector) && atirando) {
             target2 = true;
+            collisionList[1].alive = false;
         }
 
         if(isVectorIntersectingBox(hitscanList[2], camera_position_c, camera_view_vector) && atirando) {
             target3 = true;
+            collisionList[2].alive = false;
         }
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far

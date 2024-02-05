@@ -22,6 +22,7 @@ bool isPointInsideSphere(const glm::vec3& point, const BoundingSphere& sphere) {
     return distance <= sphere.radius + 0.3f;
 }
 
+// FONTE: https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html (não é uma cópia completa)
 bool isVectorIntersectingBox(const bbox& bbox, const glm::vec4& vector_origin, const glm::vec4& vector_direction) {
     // Calcular os parâmetros de interseção ao longo do eixo x, y e z
     float t_xmin = (bbox.bbox_min.x - vector_origin.x) / vector_direction.x;

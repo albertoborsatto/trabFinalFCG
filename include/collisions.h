@@ -15,6 +15,7 @@ struct bbox
 {
     glm::vec4    bbox_min;
     glm::vec4    bbox_max;
+    bool         alive;
 };
 
 bool detectColision(glm::vec4 position, glm::vec4 hitbox_min, glm::vec4 hitbox_max);
