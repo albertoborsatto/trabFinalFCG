@@ -389,7 +389,7 @@ int main(int argc, char* argv[])
         LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");
         LoadTextureImage("../../data/gold_gun.jpg");
         LoadTextureImage("../../data/brickwall.jpg");
-        LoadTextureImage("../../data/asphalt.jpg");
+        LoadTextureImage("../../data/grass.jpg");
         LoadTextureImage("../../data/container_green.jpg");
         LoadTextureImage("../../data/oildrum_col.jpg");
         LoadTextureImage("../../data/pallet.jpg");
@@ -936,122 +936,11 @@ void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_b
 
     glBindVertexArray(vertex_array_object_id);
 
-        /* model = Matrix_Identity();
-        model = model * Matrix_Translate(10.0f, 0.0f, 10.0f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
-        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawCube(render_as_black_uniform);
-
-        model = Matrix_Identity();
-        model = model * Matrix_Translate(0.0f, 0.0f, 20.0f) * Matrix_Scale(20.0f, 1.0f, 0.01f);
-        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawCube(render_as_black_uniform);
-
-        model = Matrix_Identity();
-        model = model * Matrix_Translate(-10.0f, 0.0f, 10.0f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
-        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawCube(render_as_black_uniform); */
-
-        
         model = Matrix_Identity();
         model = model * Matrix_Translate(0.0f, -0.5f, 10.0f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, PLANE);
         DrawVirtualObject("the_plane");
-    
-
-        /* offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 3.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        }
-
-        offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 5.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        }
-
-        offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 7.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        }
-
-        offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 9.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        }
-
-        offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 11.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        }
-
-        offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 13.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        }
-
-        offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 15.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        }
-
-        offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 17.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        }
-
-        offset = 0.0f;
-        for(int i = 0; i < 10; i++) {
-            model = Matrix_Identity();
-            model = model * Matrix_Translate(-9.0f+offset, -0.5f, 19.0f);
-            glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
-            glUniform1i(g_object_id_uniform, PLANE);
-            DrawVirtualObject("the_plane");
-            offset += 2.0f;
-        } */
-        
         
         model = Matrix_Identity();
         model = model * Matrix_Translate(-2.0f, -0.5f, 19.95f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
@@ -1516,8 +1405,8 @@ void LoadTextureImage(const char* filename)
     glGenSamplers(1, &sampler_id);
 
     // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 
     // Parâmetros de amostragem da textura.
     glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);

@@ -149,6 +149,8 @@ void main()
         q = 16.0;
 
     } else if (object_id == PLANE) {
+        U = 16*texcoords.x;
+        V = 16*texcoords.y;
         Kd0 = texture(TextureImage4, vec2(U,V)).rgb;
     } else if (object_id == WALL) {
         Kd0 = texture(TextureImage3, vec2(U,V)).rgb;
