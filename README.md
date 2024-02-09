@@ -1,87 +1,79 @@
-RELATÓRIO - 
+# Relatório de Desenvolvimento
 
-	Lucas Moreira Schirmbeck - 00324412
-	Alberto Vargas Borsatto  - 00287213
+**Desenvolvedores:**
+- Lucas Moreira Schirmbeck - 00324412
+- Alberto Vargas Borsatto - 00287213
 
+## Imagens
 
-Distribuição de tarefas:
+  ![image](https://github.com/albertoborsatto/trabFinalFCG/assets/93798209/5cb90ba0-2855-492d-aa30-64ababbca791)
 
-	+-----------------------------------------------------+----------------+
-	| Critérios Técnicos				                          | Integrante     |
-	+-----------------------------------------------------+----------------+
-	| Malhas poligonais complexas 			                  | Lucas e Alberto|
-	| Transformações geométricas controladas pelo usuário | Lucas	         |
-	| Câmera livre e câmera look-at 		                  | Lucas	         |
-	| Instâncias de objetos 			                        | Lucas e Alberto|
-	| Três tipos de testes de intersecção 		            | Lucas e Alberto|
-	| Modelos de Iluminação Difusa e Blinn-Phong 	        | Alberto	       |
-	| Modelos de Interpolação de Phong e Gouraud 	        | ?	             |
-	| Mapeamento de texturas em todos os objetos 	        | Alberto        |
-	| Movimentação com curva Bézier cúbica 		            | Alberto	       |
-	| Animações baseadas no tempo ($\Delta t$)	          | Alberto        |
-	+-----------------------------------------------------+----------------+
+  ![image](https://github.com/albertoborsatto/trabFinalFCG/assets/93798209/fc3bd734-29aa-4d6d-9ef1-4f5fffe11b97)
 
+  
+## Distribuição de Tarefas
 
-ChatGPT:
-	
-	  Fizemos o uso do ChatGPT para nos auxiliar nas colisões, especialmente para 'refinar' a função vetor-plano utilizada para implementar a funcionalidade de atirar que havíamos elaborado, e tentar achar erros na implementação, 
-  já que em alguns momentos durante o desenvolvimento essa funcionalidade não parecia completamente correta. Sendo assim, passamos a função para o ChatGPT analisar tentar melhorar pontos que julga estarem errados. Dessa forma 
-  conseguimos uma função melhorada, já que após seu uso a funcionalidade de atirar estava perceptivelmente melhor. Logo, concluímos que o ChatGPT é uma ferramenta muito poderosa quando utilizada de maneira a melhor ideias já existentes, 
-  pois dessa maneira podemos controlar qualquer falha cometida por ele.
+| Critérios Técnicos                                    | Integrante    |
+|--------------------------------------------------------|---------------|
+| Malhas poligonais complexas                            | Lucas e Alberto|
+| Transformações geométricas controladas pelo usuário     | Lucas         |
+| Câmera livre e câmera look-at                           | Lucas         |
+| Instâncias de objetos                                  | Lucas e Alberto|
+| Três tipos de testes de interseção                      | Lucas e Alberto|
+| Modelos de Iluminação Difusa e Blinn-Phong             | Alberto       |
+| Modelos de Interpolação de Phong e Gouraud             | ?             |
+| Mapeamento de texturas em todos os objetos             | Alberto       |
+| Movimentação com curva Bézier cúbica                   | Alberto       |
+| Animações baseadas no tempo ($\Delta t$)               | Alberto       |
 
-Descrição do processo de desenvolvimento:
+## ChatGPT
 
-	Câmera: Começamos o desenvolvimento com uma ideia diferente do que a aplicação seria. Sendo assim, começamos por tentar implementar funções básicas de câmera, como conseguir andar e alterar para a look-at. Para implementar a câmera look-at, 
- fizemos uma função muito semelhante à transformação de matriz para a movimentação da câmera, com o diferencial de que não realizamos as mudanças no ponto da câmera a partir das teclas WASD. Para achar o ponto ideal utilizamos o callback do 
- scroll e printamos a posição. A parte mais trabalhosa foi fazer com que a arma "seguisse" a câmera, pois tinhamos uma ideia errônea de como deveria ser implementada. 
+O ChatGPT foi utilizado de forma eficaz para aprimorar a função de detecção de colisões. Especificamente, a função vetor-plano foi refinada com a orientação do ChatGPT, melhorando significativamente a funcionalidade de atirar no jogo. A utilização do ChatGPT como uma ferramenta de refinamento e correção de código mostrou-se valiosa.
 
-	Instâncias de objetos: Após isso, mudamos nossa ideia original e começamos o desenvolvimento do mapa, colocando objetos complexos na cena e para isso, utilizando de auxílio todo o material disponibilizado no laboratório 4. 
+## Descrição do Processo de Desenvolvimento
 
-	Texturas: Para as texturas, basicamente tivemos que trazer alterações no código do laboratório 5. Aplicamos dois tipos de mapeamento: um exclusivamente para o globo, e os outros para o restante dos objetos carregados em cena. Todos os 
- objetos carregados já contavam com as coordenadas de textura dentro do ".obj". O que deu mais trabalho para fazer foi a grama, utilizamos o parâmetro GL_MIRRORED_REPEAT para ocultar as linhas divisórias.
+### Câmera
+O desenvolvimento iniciou com a implementação de funções básicas da câmera, permitindo movimento e alternância entre modos de câmera livre e look-at. A câmera look-at foi implementada usando o callback de scroll para ajustar a posição da câmera. A sincronização da arma com a câmera foi uma parte desafiadora, corrigida por meio de uma abordagem mais adequada.
 
-	Tipos de colisão: Ponto-BoundingBox - definimos os limites mínimos e máximos da caixa dos objetos com uma estrutura "bbox", e colocamos todos os objetos dentro de um vetor. Percorremos cada objeto testando se todas as coordenadas X, Y e Z 
- da câmera não estão intersectando com os limites do objeto. Caso estiverem, retornamos a posição do jogador à ultima posição antes de colidir com a parede.
+### Instâncias de Objetos
+A ideia inicial foi modificada, dando lugar ao desenvolvimento de um mapa com objetos complexos. Utilizou-se o material do laboratório 4 como referência.
 
-	Ponto-Esfera - definimos uma estrutura para os limites da esfera, contendo o ponto central da esfera e o raio da mesma. Traçamos um vetor do ponto da câmera até o ponto central da esfera: caso o tamanho do vetor seja igual ao raio da 
- esfera (+0,3), fazemos o mesmo procedimento que a colisão Ponto-BoundingBox.
+### Texturas
+A implementação de texturas envolveu ajustes no código do laboratório 5. Aplicou-se dois tipos de mapeamento, sendo um exclusivo para o globo e os demais para os objetos na cena. As texturas foram aplicadas com êxito, com destaque para a grama que exigiu a utilização do parâmetro GL_MIRRORED_REPEAT para ocultar linhas divisórias.
 
-	Vetor-BoundingBox - através dessa fonte: https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection.html, e o chatGPT, conseguimos implementar essa colisão. A ideia é traçar 
- um raio a partir do ponto da câmera e vetor view, e realizar testes ao longo desse raio com os mínimos e máximos da "bbox", tentando detectar intersecções.
+### Tipos de Colisão
+Foram implementados três tipos de testes de colisão: ponto-BoundingBox, ponto-Esfera e vetor-BoundingBox. A lógica e algoritmos foram derivados de fontes confiáveis, incluindo um artigo online e consultas ao ChatGPT.
 
-	Curvas de Bezier: primeiramente foram definidos os pontos de controle da curva, a partir deste site: https://www.desmos.com/calculator/cahqdxeshd?lang=pt-BR. A lógica do intervalo de interpolção 't', é realizada a partir da função "glfwGetTime()" 
- e aplicação do seno do tempo * 0.2, a fim de manter a variável em um intervalo de -1 até 1. Para fazer com que essa interpolação fique entre 0 e 1, quando a variável 't' era negativa, multiplicamos por -1. Então chamamos a função para realizar o 
- Bezier cúbico em cima de todas as coordenadas do ponto de controle dentro do intervalo de interpolação. O retorno era substituído na matriz translate do objeto.
+### Curvas de Bézier
+Definiram-se pontos de controle para curvas de Bézier cúbicas, e a animação foi baseada no tempo. A lógica do intervalo de interpolação 't' foi implementada usando a função "glfwGetTime()" e o seno do tempo, resultando em movimentos suaves.
 
-	Animação: aokucanis a mesma lógica do laborátorio 5, que gira o globo, com a modificação da variável que multiplica a váriavel de tempo, para girar mais rápido.
+### Animação
+A animação foi desenvolvida seguindo a lógica do laboratório 5, com modificações na variável multiplicadora do tempo para controlar a velocidade de rotação.
 
-	Blinn-Phong: Definimos o vetor 'n' como sendo "normalize(normal)"  e 'h' como sendo "normalize(v+l)" e ao final somamos ao color.rgb (pow(color.rgb, vec3(1.0,1.0,1.0)/2.2) + lambert_diffuse_term + ambient_term + blin_phong_specular_term) e 
- aplicamos aos objetos. 
+### Blinn-Phong
+O modelo de iluminação de Blinn-Phong foi implementado, utilizando vetores normalizados 'n' e 'h' e aplicando os termos difuso, ambiente e especular. A cor final do fragmento foi calculada e aplicada aos objetos.
 
-Manual de uso:
+## Manual de Uso
 
-	W - Se mover para a frente.
-	A - Se mover para a esquerda.
-	S - Se mover para trás.
-	D - Se mover para a direita.
-	V - Noclip.
-	F - Alterar câmera para a câmera Look At.
-	O - Alterar a projeção para uma projeção ortográfica.
-	P - Alterar a projeção para uma projeção perspectiva.
-	H - Ativar/desativar texto informativo.
+- **W**: Mover para frente.
+- **A**: Mover para a esquerda.
+- **S**: Mover para trás.
+- **D**: Mover para a direita.
+- **V**: Ativar/desativar modo noclip.
+- **F**: Alternar entre câmera livre e câmera look-at.
+- **O**: Alternar para projeção ortográfica.
+- **P**: Alternar para projeção perspectiva.
+- **H**: Ativar/desativar texto informativo.
+- **Roda do Mouse**: Zoom na câmera perspectiva.
+- **Botão Esquerdo do Mouse**: Atirar.
 
-	Roda do mouse - Zoom  na câmera perspectiva.
-	Botão esquerdo do mouse - Atirar.
+**Objetivo do Jogo:**
+Encontrar e eliminar três alvos no mapa (inspirado no mapa "Shipment" de Call of Duty) e tocar no globo para encerrar o jogo.
 
-Objetivo:
+## Compilação
 
-	O jogo consiste em achar três alvos espalhados no mapa (que é inspirado no mapa "Shipment", da série Call of Duty), eliminá-los e tocar no globo enorme localizado no mapa. Dessa forma o jogo acabará e aplicação fechará.
+O ambiente de desenvolvimento foi preparado usando VSCode, Mingw, CMake e os passos fornecidos pelo professor. A execução da aplicação pode ser realizada pressionando o botão de 'play' no VSCode.
 
-Compilação:
-	
-	Utilizamos o VSCode para o desenvolvimento da aplicação, seguindo os passos desponibilizados pelo professor. Portanto, é necessário o mingw, CMake, VSCode e seguir os passos do professor. Com o ambiente preparado, para executar a aplicação 
- é necessário clicar no botão de 'play' no canto inferior esquerdo do VSCode. 
+## Conclusão
 
-Commits:
-
-  Caso deseje comparar commits, sugerimos que olhe na branch mapa_novo, pois a maior parte do trabalho foi feito nela.
+O desenvolvimento da aplicação envolveu a implementação de diversos elementos, desde movimentação e câmeras até colisões, animações e iluminação. A combinação de esforços entre os desenvolvedores e a utilização eficaz do ChatGPT contribuíram para o sucesso do projeto. O jogo proposto oferece uma experiência interativa e desafiadora para os usuários.
