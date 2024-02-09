@@ -43,9 +43,12 @@
 // Headers da biblioteca para carregar modelos obj
 #include <tiny_obj_loader.h>
 
+#include <stb_image.h>
+
 // Headers locais, definidos na pasta "include/"
 #include "utils.h"
 #include "matrices.h"
+#include "collisions.h"
 
 #define PI 3.14159265358979323846f
 
@@ -54,6 +57,18 @@
 #define PLANE  2
 #define WALL   3
 #define PISTOL 4
+#define M4A1   5
+#define CONTAINER 6
+#define CAR 7
+#define OPENEDCONTAINER 8
+#define BARREL 9
+#define PALLET 10
+#define TRASH 11
+#define FERRARI 12
+#define FENCE 13
+#define CAR2 14
+#define TARGET 15
+#define UFO 16
 
 // Estrutura que representa um modelo geométrico carregado a partir de um
 // arquivo ".obj". Veja https://en.wikipedia.org/wiki/Wavefront_.obj_file .
@@ -113,7 +128,6 @@ struct ObjModel
     }
 };
 
-
 // Declaração de funções utilizadas para pilha de matrizes de modelagem.
 void PushMatrix(glm::mat4 M);
 void PopMatrix(glm::mat4& M);
@@ -122,15 +136,16 @@ void PopMatrix(glm::mat4& M);
 // logo após a definição de main() neste arquivo.
 void BuildTrianglesAndAddToVirtualScene(ObjModel*); // Constrói representação de um ObjModel como malha de triângulos para renderização
 GLuint BuildTriangles(); // Constrói triângulos para renderização
-
 void ComputeNormals(ObjModel* model); // Computa normais de um ObjModel, caso não existam.
 void LoadShadersFromFiles(); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
+void LoadTextureImage(const char* filename); // Função que carrega imagens de textura
 void DrawVirtualObject(const char* object_name); // Desenha um objeto armazenado em g_VirtualScene
 GLuint LoadShader_Vertex(const char* filename);   // Carrega um vertex shader
 GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
 void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
 GLuint CreateGpuProgram(GLuint vertex_shader_id, GLuint fragment_shader_id); // Cria um programa de GPU
 void PrintObjModelInfo(ObjModel*); // Função para debugging
+glm::vec4 Bezier(const std::vector<glm::vec4>& pontosDeControle, float t);
 
 // Declaração de funções auxiliares para renderizar texto dentro da janela
 // OpenGL. Estas funções estão definidas no arquivo "textrendering.cpp".
@@ -162,8 +177,9 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 void DrawCube(GLint render_as_black_uniform); // Desenha um cubo
 
-void RenderScenario(glm::mat4 model);
-void RenderPistol(glm::mat4 pistol);
+void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_black_uniform);
+void RenderWeapon(glm::mat4 pistol);
+
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -174,6 +190,8 @@ struct SceneObject
     size_t       num_indices; // Número de índices do objeto dentro do vetor indices[] definido em BuildTrianglesAndAddToVirtualScene()
     GLenum       rendering_mode; // Modo de rasterização (GL_TRIANGLES, GL_TRIANGLE_STRIP, etc.)
     GLuint       vertex_array_object_id; // ID do VAO onde estão armazenados os atributos do modelo
+    glm::vec3    bbox_min; // Axis-Aligned Bounding Box do objeto
+    glm::vec3    bbox_max;
 };
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
@@ -207,7 +225,7 @@ float g_AngleZ = 0.0f;
 
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
-bool g_LeftMouseButtonPressed = false;
+bool g_LeftMouseButtonPressed = true;
 bool g_RightMouseButtonPressed = false; // Análogo para botão direito do mouse
 bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mouse
 
@@ -215,7 +233,7 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 // usuário através do mouse (veja função CursorPosCallback()). A posição
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
 // renderização.
-float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
+float g_CameraTheta = PI/2; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 3.5f; // Distância da câmera para a origem
 
@@ -233,11 +251,17 @@ bool g_UsePerspectiveProjection = true;
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
 
-bool tecla_W_pressionada = false;
-bool tecla_A_pressionada = false;
-bool tecla_S_pressionada = false;
-bool tecla_D_pressionada = false;
+bool frente = false;
+bool direita = false;
+bool tras = false;
+bool esquerda = false;
+bool show_weapon = true;
 bool free_Camera = true;
+bool load_coordinates = true;
+bool noclip = false;
+bool pistol_Current = false;
+bool collisionBool = false;
+int flashlight_On = 0;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
 GLuint g_GpuProgramID = 0;
@@ -245,6 +269,14 @@ GLint g_model_uniform;
 GLint g_view_uniform;
 GLint g_projection_uniform;
 GLint g_object_id_uniform;
+GLint g_bbox_min_uniform;
+GLint g_bbox_max_uniform;
+GLint g_camera_position_c_uniform;
+GLint g_camera_view_vector_uniform;
+GLint g_flashlightOn;
+
+// Número de texturas carregadas pela função LoadTextureImage()
+GLuint g_NumLoadedTextures = 0;
 
 // Computamos a posição da câmera utilizando coordenadas esféricas.  As
 // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
@@ -254,6 +286,10 @@ float r;
 float y;
 float z;
 float x;
+
+float y1;
+float z1;
+float x1;
 
 // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
 // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -268,7 +304,12 @@ float delta_t;
 float speed;
 float prev_time;
 
-glm::mat4 pistol;
+bool target1 = false;
+bool target2 = false;
+bool target3 = false;
+
+bool atirando = false;
+
 
 int main(int argc, char* argv[])
 {
@@ -299,7 +340,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - Seu Cartao - Seu Nome", NULL, NULL);
+    window = glfwCreateWindow(1920 , 1080, "INF01047 - Seu Cartao - Seu Nome", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -328,7 +369,8 @@ int main(int argc, char* argv[])
     // redimensionada, por consequência alterando o tamanho do "framebuffer"
     // (região de memória onde são armazenados os pixels da imagem).
     glfwSetFramebufferSizeCallback(window, FramebufferSizeCallback);
-    FramebufferSizeCallback(window, 800, 600); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+    FramebufferSizeCallback(window, 1920, 1080); // Forçamos a chamada do callback acima, para definir g_ScreenRatio.
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Imprimimos no terminal informações sobre a GPU do sistema
     const GLubyte *vendor      = glGetString(GL_VENDOR);
@@ -343,6 +385,19 @@ int main(int argc, char* argv[])
     //
     LoadShadersFromFiles();
 
+        LoadTextureImage("../../data/car_uv.png");
+        LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");
+        LoadTextureImage("../../data/gold_gun.jpg");
+        LoadTextureImage("../../data/brickwall.jpg");
+        LoadTextureImage("../../data/grass.jpg");
+        LoadTextureImage("../../data/container_green.jpg");
+        LoadTextureImage("../../data/oildrum_col.jpg");
+        LoadTextureImage("../../data/pallet.jpg");
+        LoadTextureImage("../../data/trash.jpg");
+        LoadTextureImage("../../data/silver_container.jpg");
+        LoadTextureImage("../../data/texture.jpg");
+        LoadTextureImage("../../data/target.jpg");
+        LoadTextureImage("../../data/ufo_diffuse.png");
     // Construímos a representação de um triângulo
     GLuint vertex_array_object_id = BuildTriangles();
 
@@ -367,11 +422,180 @@ int main(int argc, char* argv[])
     ComputeNormals(&pistolmodel);
     BuildTrianglesAndAddToVirtualScene(&pistolmodel);
 
+    ObjModel m4a1model("../../data/m4a1.obj");
+    ComputeNormals(&m4a1model);
+    BuildTrianglesAndAddToVirtualScene(&m4a1model);
+
+    ObjModel containermodel("../../data/container.obj");
+    ComputeNormals(&containermodel);
+    BuildTrianglesAndAddToVirtualScene(&containermodel);
+
+    ObjModel carmodel("../../data/Rusted Car.obj");
+    ComputeNormals(&carmodel);
+    BuildTrianglesAndAddToVirtualScene(&carmodel);
+
+    ObjModel carmodel2("../../data/Car.obj");
+    ComputeNormals(&carmodel2);
+    BuildTrianglesAndAddToVirtualScene(&carmodel2);
+
+    ObjModel openedcontainermodel("../../data/Container20-4DoorsShell.obj");
+    ComputeNormals(&openedcontainermodel);
+    BuildTrianglesAndAddToVirtualScene(&openedcontainermodel);
+
+    ObjModel closedcontainermodel("../../data/Container20-2Doors.obj");
+    ComputeNormals(&closedcontainermodel);
+    BuildTrianglesAndAddToVirtualScene(&closedcontainermodel);
+
+    ObjModel barrelmodel("../../data/Drum.obj");
+    ComputeNormals(&barrelmodel);
+    BuildTrianglesAndAddToVirtualScene(&barrelmodel);
+
+    ObjModel palletmodel("../../data/LP_Pallets.obj");
+    ComputeNormals(&palletmodel);
+    BuildTrianglesAndAddToVirtualScene(&palletmodel);
+
+    ObjModel trashmodel("../../data/Garbage_Container_.obj");
+    ComputeNormals(&trashmodel);
+    BuildTrianglesAndAddToVirtualScene(&trashmodel);
+
+    ObjModel targetmodel("../../data/target.obj");
+    ComputeNormals(&targetmodel);
+    BuildTrianglesAndAddToVirtualScene(&targetmodel);
+
+    ObjModel ufomodel("../../data/Low_poly_UFO.obj");
+    ComputeNormals(&ufomodel);
+    BuildTrianglesAndAddToVirtualScene(&ufomodel);
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
         BuildTrianglesAndAddToVirtualScene(&model);
     }
+
+    bbox wall1;
+    wall1.bbox_min = glm::vec4(-10.0f, 0.0f, -0.5f, 0);
+    wall1.bbox_max = glm::vec4(10.0f, 2.5f, -0.5f, 0);
+    wall1.alive = true;
+    
+    bbox wall2;
+    wall2.bbox_min = glm::vec4(-10.0f, 0.0f, 20.5f, 0);
+    wall2.bbox_max = glm::vec4(10.0f, 2.5f, 20.5f, 0);
+    wall2.alive = true;
+    
+    bbox wall3;
+    wall3.bbox_min = glm::vec4(10.5f, 0.0f, 0.0f, 0);
+    wall3.bbox_max = glm::vec4(10.5f, 2.5f, 20.0f, 0);
+    wall3.alive = true;
+    
+    bbox wall4;
+    wall4.bbox_min = glm::vec4(-10.5f, 0.0f, 0.0f, 0);
+    wall4.bbox_max = glm::vec4(-10.5f, 2.5f, 20.0f, 0);
+    wall4.alive = true;
+
+    bbox midContainers1;
+    midContainers1.bbox_min = glm::vec4(3.5f, 0.0f, 6.5f, 0);
+    midContainers1.bbox_max = glm::vec4(3.5f, 2.5f, 7.8f, 0);
+    midContainers1.alive = true;
+    
+    bbox midContainers2;
+    midContainers2.bbox_min = glm::vec4(1.5f, 0.0f, 7.1f, 0);
+    midContainers2.bbox_max = glm::vec4(3.5f, 2.5f, 7.1f, 0);
+    midContainers2.alive = true;
+    
+    bbox midContainers3;
+    midContainers3.bbox_min = glm::vec4(1.5f, 0.0f, 8.2f, 0);
+    midContainers3.bbox_max = glm::vec4(3.5f, 2.5f, 8.2f, 0);
+    midContainers3.alive = true;
+    
+    bbox midContainers4;
+    midContainers4.bbox_min = glm::vec4(1.5f, 0.0f, 11.3f, 0);
+    midContainers4.bbox_max = glm::vec4(3.5f, 1.25f, 12.5f, 0);
+    midContainers4.alive = true;
+    
+    
+    bbox midContainers5;
+    midContainers5.bbox_min = glm::vec4(-3.5f, 0.0f, 11.3f, 0);
+    midContainers5.bbox_max = glm::vec4(-1.5f, 2.5f, 12.5f, 0);
+    midContainers5.alive = true;
+    
+    
+    bbox midContainers6;
+    midContainers6.bbox_min = glm::vec4(-3.5f, 0.0f, 7.0f, 0);
+    midContainers6.bbox_max = glm::vec4(-1.5f, 1.25f, 8.0f, 0);
+    midContainers6.alive = true;
+    
+    
+    bbox midContainers7;
+    midContainers7.bbox_min = glm::vec4(-2.0f, 0.0f, 1.0f, 0);
+    midContainers7.bbox_max = glm::vec4(0.2f, 1.25f, 2.0f, 0);
+    midContainers7.alive = true;
+    
+    bbox midContainers8;
+    midContainers8.bbox_min = glm::vec4(-10.0f, 0.0f, 8.5f, 0);
+    midContainers8.bbox_max = glm::vec4(-8.0f, 1.25f, 10.5f, 0);
+    midContainers8.alive = true;
+    
+    bbox midContainers9;
+    midContainers9.bbox_min = glm::vec4(-1.5f, 0.0f, 16.6f, 0);
+    midContainers9.bbox_max = glm::vec4(0.5f, 1.25f, 16.8f, 0);
+    midContainers9.alive = true;
+    
+    bbox midContainers10;
+    midContainers10.bbox_min = glm::vec4(-1.5f, 0.0f, 19.5f, 0);
+    midContainers10.bbox_max = glm::vec4(0.5f, 1.25f, 19.5f, 0);
+    midContainers10.alive = true;
+    
+    bbox midContainers11;
+    midContainers11.bbox_min = glm::vec4(-1.5f, 1.25f, 18.0f, 0);
+    midContainers11.bbox_max = glm::vec4(0.5f, 2.50f, 18.0f, 0);
+    midContainers11.alive = true;
+    
+    bbox trashCan1;
+    trashCan1.bbox_min = glm::vec4(2.6f, 0.0f, 0.0f, 0);
+    trashCan1.bbox_max = glm::vec4(3.6f, 0.5f, 0.5f, 0);
+    trashCan1.alive = true;
+    
+    bbox alvo1;
+    alvo1.bbox_min = glm::vec4(-0.3f, 0.0f, 9.5f, 0);
+    alvo1.bbox_max = glm::vec4(0.5f, 0.5f, 10.0f, 0);
+    alvo1.alive = true;
+
+    bbox alvo2;
+    alvo2.bbox_min = glm::vec4(-1.9f, 1.25f, 16.7f, 0);
+    alvo2.bbox_max = glm::vec4(-1.15f, 1.75f, 17.5f, 0);
+    alvo2.alive = true;
+
+    bbox alvo3;
+    alvo3.bbox_min = glm::vec4(7.9f, 0.0f, 1.15f, 0);
+    alvo3.bbox_max = glm::vec4(8.7f, 0.5f, 2.15f, 0);
+    alvo3.alive = true;
+
+    std::vector<bbox> collisionList;
+
+    collisionList.push_back(alvo1);
+    collisionList.push_back(alvo2);
+    collisionList.push_back(alvo3);
+    collisionList.push_back(wall1);
+    collisionList.push_back(wall2);
+    collisionList.push_back(wall3);
+    collisionList.push_back(wall4);
+    collisionList.push_back(midContainers1);
+    collisionList.push_back(midContainers2);
+    collisionList.push_back(midContainers3);
+    collisionList.push_back(midContainers4);
+    collisionList.push_back(midContainers5);
+    collisionList.push_back(midContainers6);
+    collisionList.push_back(midContainers7);
+    collisionList.push_back(midContainers8);
+    collisionList.push_back(midContainers9);
+    collisionList.push_back(midContainers10);
+    collisionList.push_back(midContainers11);
+    collisionList.push_back(trashCan1);
+
+     std::vector<bbox> hitscanList;
+
+    hitscanList.push_back(alvo1);
+    hitscanList.push_back(alvo2);
+    hitscanList.push_back(alvo3);
 
     // Inicializamos o código para renderização de texto.
     TextRendering_Init();
@@ -383,6 +607,10 @@ int main(int argc, char* argv[])
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
+
+    float agora;
+    float previo = glfwGetTime();
+    float passo;
 
     if (free_Camera==true)
     {
@@ -397,7 +625,7 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+        camera_position_c  = glm::vec4(8.6f, 0.38f, 9.8f, 1.0f); // Ponto "c", centro da câmera
         camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
         camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
@@ -405,7 +633,7 @@ int main(int argc, char* argv[])
         //GLint model_uniform           = glGetUniformLocation(g_GpuProgramID, "model"); // Variável da matriz "model"
         //GLint render_as_black_uniform = glGetUniformLocation(g_GpuProgramID, "render_as_black"); // Variável booleana em shader_vertex.glsl
         delta_t;
-        speed = 2.0f;
+        speed = 8.0f;
         prev_time = (float)glfwGetTime();
         // Ficamos em um loop infinito, renderizando, até que o usuário feche a janela
     }
@@ -414,6 +642,10 @@ int main(int argc, char* argv[])
     GLint view_uniform            = glGetUniformLocation(g_GpuProgramID, "view"); // Variável da matriz "view" em shader_vertex.glsl
     GLint projection_uniform      = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     GLint render_as_black_uniform = glGetUniformLocation(g_GpuProgramID, "render_as_black"); // Variável booleana em shader_vertex.glsl
+
+    /* int walls_positions[20][20] = {3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
+                                   3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
+                                   3}; */
 
     while (!glfwWindowShouldClose(window))
     {
@@ -438,8 +670,21 @@ int main(int argc, char* argv[])
         // os shaders de vértice e fragmentos).
         glUseProgram(g_GpuProgramID);
 
+        glm::vec4 lastCameraPos;
+
+        glm::mat4 view;
+
+        agora = glfwGetTime();
+        passo = agora - previo;
+
+        previo = agora;
+
+        glUniform4fv(g_camera_position_c_uniform, 1, glm::value_ptr(camera_position_c));
+        glUniform4fv(g_camera_view_vector_uniform, 1, glm::value_ptr(camera_view_vector));
+        glUniform1i(g_flashlightOn, flashlight_On);
+
         if(free_Camera == false){
-            r = g_CameraDistance;
+            r = 20.0f;
             y = r*sin(g_CameraPhi);
             z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
             x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
@@ -450,16 +695,71 @@ int main(int argc, char* argv[])
             camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
             camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+            view = Matrix_Camera_View_lookAt(camera_position_c, camera_view_vector, camera_up_vector);
+        } else {
+            lastCameraPos = glm::vec4(camera_position_c.x,camera_position_c.y,camera_position_c.z,camera_position_c.w);
+            if(x1 != 0 && y1 != 0 && z1 != 0) {
+                camera_position_c = glm::vec4(x1,y1,z1,1.0f);
+                x1 = 0;
+                y1 = 0;
+                z1 = 0;
+            }
+            view = Matrix_Camera_View(&camera_position_c, camera_view_vector, camera_up_vector, frente, tras, direita, esquerda, speed, noclip, passo);
+        }
+
+        collisionBool = false;
+
+        for (int i=0; i<collisionList.size(); i++) {
+            bbox wallHitbox;
+            wallHitbox.bbox_min = collisionList[i].bbox_min;
+            wallHitbox.bbox_max = collisionList[i].bbox_max;
+            wallHitbox.alive = collisionList[i].alive;
+
+            wallHitbox.bbox_max.x+=0.8f;
+            wallHitbox.bbox_min.x-=0.8f;
+            wallHitbox.bbox_max.z+=0.8f;
+            wallHitbox.bbox_min.z-=0.8f;
+
+            if(detectColision(camera_position_c, wallHitbox.bbox_min, wallHitbox.bbox_max) && wallHitbox.alive)
+            {
+                collisionBool=true;
+            }
+        }
+
+        BoundingSphere sphere;
+        sphere.center = glm::vec3(-7.5f, 0.5f, 5.0f);
+        sphere.radius = 1.0f;
+
+        if(isPointInsideSphere(camera_position_c, sphere)) {
+            collisionBool = true;
+            if(target1 && target2 && target3) {
+                glfwSetWindowShouldClose(window, GL_TRUE);
+            }
+        }
+
+       if(isVectorIntersectingBox(hitscanList[0], camera_position_c, camera_view_vector) && atirando) {
+            target1 = true;
+            collisionList[0].alive = false;
+        }
+
+        if(isVectorIntersectingBox(hitscanList[1], camera_position_c, camera_view_vector) && atirando) {
+            target2 = true;
+            collisionList[1].alive = false;
+        }
+
+        if(isVectorIntersectingBox(hitscanList[2], camera_position_c, camera_view_vector) && atirando) {
+            target3 = true;
+            collisionList[2].alive = false;
         }
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -30.0f; // Posição do "far plane"
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
@@ -501,44 +801,24 @@ int main(int argc, char* argv[])
             z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
             x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
             camera_view_vector = glm::vec4(-x,-y,-z,0.0f);
-
-            if (tecla_D_pressionada)
-                // Movimenta câmera para direita
-                camera_position_c += u * speed * delta_t;
-
-            if (tecla_W_pressionada)
-                // Movimenta câmera para frente
-                camera_position_c += -w * speed * delta_t;
-
-            if (tecla_S_pressionada)
-                // Movimenta câmera para esquerda
-                camera_position_c += w * speed * delta_t;
-
-            if (tecla_A_pressionada)
-                // Movimenta câmera para trás
-                camera_position_c += -u * speed * delta_t;
         }
 
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f, 0.2f,-1.93f)
-        * Matrix_Scale(0.1f, 0.1f, 0.1f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_sphere");
-
-        RenderScenario(model);
-
-        //Desenhamos parede
-        glBindVertexArray(vertex_array_object_id);
+        //RenderScenario(model);
+ 
+        RenderMap(model, vertex_array_object_id, render_as_black_uniform);
+        /* glBindVertexArray(vertex_array_object_id);
         model = Matrix_Identity();
+        model = model * Matrix_Translate(10.0f, 0.0f, 0.5f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(20.0f, 1.0f, 0.01f);
         glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
         glUniform1i(g_object_id_uniform, BUNNY);
-        DrawCube(render_as_black_uniform);
+        DrawCube(render_as_black_uniform); */
 
         glm::mat4 identity = Matrix_Identity();
         glUniformMatrix4fv(g_view_uniform, 1 , GL_FALSE , glm::value_ptr(identity));
 
-        RenderPistol(model);
+        RenderWeapon(model);
+
+        if(collisionBool) camera_position_c = lastCameraPos;
 
         // Imprimimos na tela os ângulos de Euler que controlam a rotação do
         // terceiro cubo.
@@ -564,6 +844,8 @@ int main(int argc, char* argv[])
         // definidas anteriormente usando glfwSet*Callback() serão chamadas
         // pela biblioteca GLFW.
         glfwPollEvents();
+
+        //std::cout << camera_position_c.x << " " << camera_position_c.y << " " << camera_position_c.z << std::endl;
     }
 
     // Finalizamos o uso dos recursos do sistema operacional
@@ -573,60 +855,579 @@ int main(int argc, char* argv[])
     return 0;
 }
 
-void RenderScenario(glm::mat4 model) {
-
-    //Desenhamos o modelo do chão
-    model = Matrix_Translate(0.0f,-1.0f, 0.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, PLANE);
-    DrawVirtualObject("the_plane");
-
-    model = Matrix_Translate(0.0f, 1.0f, 0.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f)
-          * Matrix_Rotate_Z(PI);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, PLANE);
-    DrawVirtualObject("the_plane");
-
-    model = Matrix_Translate(0.0f, -1.0f, -4.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f);
+void RenderMap(glm::mat4 model, GLuint vertex_array_object_id, GLint render_as_black_uniform){
+    
+    glBindVertexArray(vertex_array_object_id);
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-9.8f, 0.8f, 0.0f) * Matrix_Scale(0.5f, 0.2f, 1.0f);
     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
     glUniform1i(g_object_id_uniform, WALL);
-    DrawVirtualObject("the_wall");
+    DrawVirtualObject("Plane.001");
 
-    model = Matrix_Translate(4.0f, -1.0f, 0.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f)
-          * Matrix_Rotate_Y(3.0f*PI/2.0f);
+    glBindVertexArray(vertex_array_object_id);
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-3.4f, 0.8f, 0.0f) * Matrix_Scale(0.50f, 0.2f, 1.0f);
     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
     glUniform1i(g_object_id_uniform, WALL);
-    DrawVirtualObject("the_wall");
+    DrawVirtualObject("Plane.001");
 
-    model = Matrix_Translate(-4.0f, -1.0f, 0.0f)
-          * Matrix_Scale(2.0f, 1.0f, 2.0f)
-          * Matrix_Rotate_Y(PI/2.0f);
+    glBindVertexArray(vertex_array_object_id);
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(3.0f, 0.8f, 0.0f) * Matrix_Scale(0.56f, 0.2f, 1.0f);
     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
     glUniform1i(g_object_id_uniform, WALL);
-    DrawVirtualObject("the_wall");
+    DrawVirtualObject("Plane.001");
 
-    model = Matrix_Translate(0.0f, -1.0f, -3.0f)
-          * Matrix_Scale(2.0f, 0.5f, 2.0f);
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(10.0f, 0.8f, 0.2f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.5f, 0.2f, 1.0f);
     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
     glUniform1i(g_object_id_uniform, WALL);
-    DrawVirtualObject("the_wall");
+    DrawVirtualObject("Plane.001");
 
-    model = Matrix_Translate(0.0f, 0.0f, -1.5f)
-          * Matrix_Scale(2.0f, 1.0f, 0.5f);
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(10.0f, 0.8f, 6.6f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.5f, 0.2f, 1.0f);
     glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-    glUniform1i(g_object_id_uniform, PLANE);
-    DrawVirtualObject("the_plane");
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(10.0f, 0.8f, 13.0f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.56f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(9.9f, 0.8f, 20.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(0.5f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(3.5f, 0.8f, 20.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(0.5f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-2.9f, 0.8f, 20.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(0.56f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-10.0f, 0.8f, 19.8f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(0.50f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-10.0f, 0.8f, 13.4f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(0.50f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    model = Matrix_Identity();
+    model = model * Matrix_Translate(-10.0f, 0.8f, 7.0f) * Matrix_Rotate_Y(PI/2) * Matrix_Scale(0.56f, 0.2f, 1.0f);
+    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+    glUniform1i(g_object_id_uniform, WALL);
+    DrawVirtualObject("Plane.001");
+
+    glBindVertexArray(vertex_array_object_id);
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(0.0f, -0.5f, 10.0f);
+        glUniformMatrix4fv(g_model_uniform, 1, GL_FALSE, glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PLANE);
+        DrawVirtualObject("the_plane");
+        
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-2.0f, -0.5f, 19.95f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-2.0f, -0.5f, 17.45f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-2.0f, 0.76f, 18.75f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(6.0f, -0.5f, 4.5f) * Matrix_Rotate_Y(-(PI/4.0f)) * Matrix_Scale(0.2f, 0.2f, 0.2f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CAR);
+        DrawVirtualObject("the_car");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-8.7f, -0.5f, 8.0f) * Matrix_Rotate_Y(-(PI/2)) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-10.0f, -0.5f, 8.0f) * Matrix_Rotate_Y(-(PI/2)) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-2.3f, -0.5f, 2.7f) * Matrix_Scale(0.005f, 0.005f, 0.005f) * Matrix_Rotate_Y(PI/64);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-2.3f, -0.5f, 1.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, -0.5f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, -0.5f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, -0.5f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, -0.5f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, 0.8f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-4.0f, 0.8f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, -0.5f, 11.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, -0.5f, 13.3f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, -0.5f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, -0.5f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, 0.8f, 7.5f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(1.0f, 0.8f, 8.9f) * Matrix_Scale(0.005f, 0.005f, 0.005f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CONTAINER);
+        DrawVirtualObject("BottomPanel");
+        DrawVirtualObject("MainFrame");
+        DrawVirtualObject("Corners");
+        DrawVirtualObject("Latches");
+        DrawVirtualObject("SideLeft");
+        DrawVirtualObject("SideRight");
+        DrawVirtualObject("TopPanel");
+        DrawVirtualObject("BackWall");
+        DrawVirtualObject("DoorLeft");
+        DrawVirtualObject("DoorRight");
+        
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-7.0f, -0.5f, 17.0f) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, PALLET);
+        DrawVirtualObject("default");
+        DrawVirtualObject("polySurface38");
+        DrawVirtualObject("polySurface39");
+        DrawVirtualObject("polySurface37");
+    
+        model = Matrix_Identity();
+        model = Matrix_Translate(7.0f, -0.5f, 18.5f) * Matrix_Rotate_Y(-(PI/4)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, TRASH);
+        DrawVirtualObject("Cube");
+
+        model = Matrix_Identity();
+        model = Matrix_Translate(3.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, TRASH);
+        DrawVirtualObject("Cube");
+        model = Matrix_Identity();
+        model = Matrix_Translate(2.5f, -0.5f, 0.5f) * Matrix_Rotate_Y((PI/2)) * Matrix_Scale(0.3f, 0.3f, 0.3f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, TRASH);
+        DrawVirtualObject("Cube");
+        
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-7.0f, -0.5f, 15.0f) * Matrix_Rotate_Y(PI/4) * Matrix_Scale(0.4f, 0.4f, 0.4f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CAR);
+        DrawVirtualObject("Cylinder.002_Cylinder.023");
+        DrawVirtualObject("Cylinder.003_Cylinder.024");
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(7.0f, -0.5f, 16.0f) * Matrix_Rotate_Y(-PI) * Matrix_Scale(0.2f, 0.2f, 0.2f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CAR);
+        DrawVirtualObject("the_car");
+
+        float time = glfwGetTime();
+
+        std::vector<glm::vec4> controlPoints = {
+        glm::vec4(-10.0f, 5.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 5.0f, 0.0f, 1.0f),
+        glm::vec4(0.0f, 5.0f, 10.0f, 1.0f),
+        glm::vec4(10.0f, 5.0f, 20.0f, 1.0f)
+    };
+
+        float t = sin(time*0.2f);
+        
+        
+        if(t < 0.0f)
+            t *= -1.0f;
+
+        glm::vec4 ufoTranslate = Bezier(controlPoints, t);
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(ufoTranslate.x, ufoTranslate.y, ufoTranslate.z)
+        * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.5f) * Matrix_Scale(0.1f, 0.1f, 0.1f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, UFO);
+        DrawVirtualObject("UFO_body");
+
+        
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-7.5f, 0.5f, 5.0f)
+        * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, SPHERE);
+        DrawVirtualObject("the_sphere");
+
+        if(target1==false){
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(0.0f, -0.5f, 10.0f) * Matrix_Rotate_X(-PI/2) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, TARGET);
+            DrawVirtualObject("target");
+        }
+
+        if(target2==false){
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(-1.5f, 0.75f, 17.0f) * Matrix_Rotate_X(-PI/2) * Matrix_Rotate_Z(PI) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, TARGET);
+            DrawVirtualObject("target");
+        }
+
+        if(target3==false){
+            model = Matrix_Identity();
+            model = model * Matrix_Translate(8.5f, -0.5f, 1.5f) * Matrix_Rotate_X(-PI/2) * Matrix_Rotate_Z(-PI/3) * Matrix_Scale(0.01f, 0.01f, 0.01f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, TARGET);
+            DrawVirtualObject("target");
+        }
+
+        /* model = Matrix_Identity();
+        model = Matrix_Translate(7.0f, -0.5f, 16.5f) * Matrix_Rotate_Y(-PI/2) * Matrix_Scale(0.7f, 0.7f, 0.7f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CAR);
+        DrawVirtualObject("Car_Cube"); */
+
+        model = Matrix_Identity();
+        model = model * Matrix_Translate(-6.5f, -0.5f, 3.0f) * Matrix_Rotate_Y(-PI/4) * Matrix_Scale(0.4f, 0.4f, 0.4f);
+        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(g_object_id_uniform, CAR);
+        DrawVirtualObject("Cylinder_Cylinder.016");
+        DrawVirtualObject("Cylinder.002_Cylinder.023");
+        DrawVirtualObject("Cylinder.003_Cylinder.024");
 }
 
-void RenderPistol(glm::mat4 pistol) {
-    pistol = Matrix_Translate(0.2,-0.4,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
-    glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(pistol));
-    glUniform1i(g_object_id_uniform, SPHERE);
-    DrawVirtualObject("the_pistol");
+void RenderWeapon(glm::mat4 weapon) {
+    if(show_weapon) {
+        if(pistol_Current){
+            weapon = Matrix_Translate(0.2,-0.45,-0.5) * Matrix_Scale(0.1f, 0.1f, 0.1f) * Matrix_Rotate_Y(3.0*PI/2.0f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
+            glUniform1i(g_object_id_uniform, PISTOL);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            DrawVirtualObject("the_pistol");
+    } else {
+            weapon = Matrix_Translate(0.15,-0.3,-0.5) * Matrix_Scale(0.15f, 0.15f, 0.15f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(weapon));
+            glUniform1i(g_object_id_uniform, M4A1);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            DrawVirtualObject("the_m4a1");
+    }
+    }
+}
+
+glm::vec4 Bezier(const std::vector<glm::vec4>& pontosDeControle, float t)
+{
+
+    return glm::vec4(
+        (pow((1.0f - t), 3) * pontosDeControle[0].x + 3 * t * pow((1.0f - t), 2) * pontosDeControle[1].x + 
+         3 * pow(t, 2) * (1.0f - t) * pontosDeControle[2].x + pow(t, 3) * pontosDeControle[3].x),
+        
+        (pow((1.0f - t), 3) * pontosDeControle[0].y + 3 * t * pow((1.0f - t), 2) * pontosDeControle[1].y + 
+         3 * pow(t, 2) * (1.0f - t) * pontosDeControle[2].y + pow(t, 3) * pontosDeControle[3].y),
+
+        (pow((1.0f - t), 3) * pontosDeControle[0].z + 3 * t * pow((1.0f - t), 2) * pontosDeControle[1].z + 
+         3 * pow(t, 2) * (1.0f - t) * pontosDeControle[2].z + pow(t, 3) * pontosDeControle[3].z),
+
+        1.0f
+    );
+}
+
+// Função que carrega uma imagem para ser utilizada como textura
+void LoadTextureImage(const char* filename)
+{
+    printf("Carregando imagem \"%s\"... ", filename);
+
+    // Primeiro fazemos a leitura da imagem do disco
+    stbi_set_flip_vertically_on_load(true);
+    int width;
+    int height;
+    int channels;
+    unsigned char *data = stbi_load(filename, &width, &height, &channels, 3);
+
+    if ( data == NULL )
+    {
+        fprintf(stderr, "ERROR: Cannot open image file \"%s\".\n", filename);
+        std::exit(EXIT_FAILURE);
+    }
+
+    printf("OK (%dx%d).\n", width, height);
+
+    // Agora criamos objetos na GPU com OpenGL para armazenar a textura
+    GLuint texture_id;
+    GLuint sampler_id;
+    glGenTextures(1, &texture_id);
+    glGenSamplers(1, &sampler_id);
+
+    // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+
+    // Parâmetros de amostragem da textura.
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Agora enviamos a imagem lida do disco para a GPU
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+    glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+    glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+
+    GLuint textureunit = g_NumLoadedTextures;
+    glActiveTexture(GL_TEXTURE0 + textureunit);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindSampler(textureunit, sampler_id);
+
+    stbi_image_free(data);
+
+    g_NumLoadedTextures += 1;
 }
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
@@ -667,7 +1468,7 @@ void LoadShadersFromFiles()
     //    + FCG_Lab_01/
     //    |
     //    +--+ bin/
-    //    |  |
+    //    |  |glsl
     //    |  +--+ Release/  (ou Debug/ ou Linux/)
     //    |     |
     //    |     o-- main.exe
@@ -695,6 +1496,24 @@ void LoadShadersFromFiles()
     g_view_uniform       = glGetUniformLocation(g_GpuProgramID, "view"); // Variável da matriz "view" em shader_vertex.glsl
     g_projection_uniform = glGetUniformLocation(g_GpuProgramID, "projection"); // Variável da matriz "projection" em shader_vertex.glsl
     g_object_id_uniform  = glGetUniformLocation(g_GpuProgramID, "object_id"); // Variável "object_id" em shader_fragment.glsl
+    g_camera_position_c_uniform = glGetUniformLocation(g_GpuProgramID, "camera_position_c");
+    g_camera_view_vector_uniform = glGetUniformLocation(g_GpuProgramID, "camera_view_vector");
+    g_flashlightOn = glGetUniformLocation(g_GpuProgramID, "flashlightOn");
+    glUseProgram(g_GpuProgramID);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage0"), 0);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage1"), 1);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage3"), 3);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage4"), 4);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage5"), 5);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage6"), 6);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage7"), 7);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage8"), 8);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage9"), 9);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage10"), 10);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage11"), 11);
+    glUniform1i(glGetUniformLocation(g_GpuProgramID, "TextureImage12"), 12);
+    glUseProgram(0);
 }
 
 // Função que pega a matriz M e guarda a mesma no topo da pilha
@@ -1090,22 +1909,6 @@ double g_LastCursorPosX, g_LastCursorPosY;
 // Função callback chamada sempre que o usuário aperta algum dos botões do mouse
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-    {
-        // Se o usuário pressionou o botão esquerdo do mouse, guardamos a
-        // posição atual do cursor nas variáveis g_LastCursorPosX e
-        // g_LastCursorPosY.  Também, setamos a variável
-        // g_LeftMouseButtonPressed como true, para saber que o usuário está
-        // com o botão esquerdo pressionado.
-        glfwGetCursorPos(window, &g_LastCursorPosX, &g_LastCursorPosY);
-        g_LeftMouseButtonPressed = true;
-    }
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-    {
-        // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
-        // variável abaixo para false.
-        g_LeftMouseButtonPressed = false;
-    }
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
         // Se o usuário pressionou o botão esquerdo do mouse, guardamos a
@@ -1137,6 +1940,22 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
         // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
         // variável abaixo para false.
         g_MiddleMouseButtonPressed = false;
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        // Se o usuário pressionou o botão esquerdo do mouse, guardamos a
+        // posição atual do cursor nas variáveis g_LastCursorPosX e
+        // g_LastCursorPosY.  Também, setamos a variável
+        // g_RightMouseButtonPressed como true, para saber que o usuário está
+        // com o botão esquerdo pressionado.
+        glfwGetCursorPos(window, &g_LastCursorPosX, &g_LastCursorPosY);
+        atirando = true;
+    }
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+    {
+        // Quando o usuário soltar o botão esquerdo do mouse, atualizamos a
+        // variável abaixo para false.
+        atirando = false;
     }
 }
 
@@ -1215,6 +2034,7 @@ void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
     // Atualizamos a distância da câmera para a origem utilizando a
     // movimentação da "rodinha", simulando um ZOOM.
     g_CameraDistance -= 0.1f*yoffset;
+    std::cout << g_CameraDistance << std::endl;
 
     // Uma câmera look-at nunca pode estar exatamente "em cima" do ponto para
     // onde ela está olhando, pois isto gera problemas de divisão por zero na
@@ -1304,86 +2124,71 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fflush(stdout);
     }
 
-    if (key == GLFW_KEY_D)
+    if (key == GLFW_KEY_W && action == GLFW_PRESS)
     {
-        if (action == GLFW_PRESS)
-            // Usuário apertou a tecla D, então atualizamos o estado para pressionada
-            tecla_D_pressionada = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla D, então atualizamos o estado para NÃO pressionada
-            tecla_D_pressionada = false;
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla D e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+        frente = true;
+    }
+    if (key == GLFW_KEY_W && action == GLFW_RELEASE)
+    {
+        frente = false;
     }
 
-    if (key == GLFW_KEY_A)
+    if (key == GLFW_KEY_S && action == GLFW_PRESS)
     {
-        if (action == GLFW_PRESS)
-            // Usuário apertou a tecla A, então atualizamos o estado para pressionada
-            tecla_A_pressionada = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla A, então atualizamos o estado para NÃO pressionada
-            tecla_A_pressionada = false;
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla A e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+        tras = true;
+    }
+    if (key == GLFW_KEY_S && action == GLFW_RELEASE)
+    {
+        tras = false;
     }
 
-    if (key == GLFW_KEY_W)
+    if (key == GLFW_KEY_D && action == GLFW_PRESS)
     {
-        if (action == GLFW_PRESS)
-            // Usuário apertou a tecla W, então atualizamos o estado para pressionada
-            tecla_W_pressionada = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla W, então atualizamos o estado para NÃO pressionada
-            tecla_W_pressionada = false;
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla W e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+        direita = true;
+    }
+    if (key == GLFW_KEY_D && action == GLFW_RELEASE)
+    {
+        direita = false;
     }
 
-    if (key == GLFW_KEY_S)
+    if (key == GLFW_KEY_A && action == GLFW_PRESS)
     {
-        if (action == GLFW_PRESS)
-            // Usuário apertou a tecla S, então atualizamos o estado para pressionada
-            tecla_S_pressionada = true;
-
-        else if (action == GLFW_RELEASE)
-            // Usuário largou a tecla S, então atualizamos o estado para NÃO pressionada
-            tecla_S_pressionada = false;
-
-        else if (action == GLFW_REPEAT)
-            // Usuário está segurando a tecla S e o sistema operacional está
-            // disparando eventos de repetição. Neste caso, não precisamos
-            // atualizar o estado da tecla, pois antes de um evento REPEAT
-            // necessariamente deve ter ocorrido um evento PRESS.
-            ;
+        esquerda = true;
+    }
+    if (key == GLFW_KEY_A && action == GLFW_RELEASE)
+    {
+        esquerda = false;
     }
 
     if (key == GLFW_KEY_F && action == GLFW_PRESS)
     {
-        free_Camera = true;
+        free_Camera = !free_Camera;
+        show_weapon = !show_weapon;
+        if(!free_Camera) {
+            y1 = camera_position_c.y;
+            z1 = camera_position_c.z;
+            x1 = camera_position_c.x;
+        }
     }
-
-    if (key == GLFW_KEY_Q && action == GLFW_PRESS)
+    if (key == GLFW_KEY_1 && action == GLFW_PRESS)
     {
-        free_Camera = false;
+        pistol_Current = false;
+    }
+    if (key == GLFW_KEY_2 && action == GLFW_PRESS)
+    {
+        pistol_Current = true;
+    }
+    if (key == GLFW_KEY_V && action == GLFW_PRESS)
+    {
+        noclip = !noclip;
+    }
+    if (key == GLFW_KEY_E && action == GLFW_PRESS)
+    {
+        if(flashlight_On==1){
+            flashlight_On=0;
+        } else {
+            flashlight_On=1;
+        }
     }
 }
 
@@ -1718,23 +2523,6 @@ void DrawCube(GLint render_as_black_uniform)
     // Pedimos para OpenGL desenhar linhas com largura de 4 pixels.
     glLineWidth(4.0f);
 
-    // Pedimos para a GPU rasterizar os vértices dos eixos XYZ
-    // apontados pelo VAO como linhas. Veja a definição de
-    // g_VirtualScene["axes"] dentro da função BuildTriangles(), e veja
-    // a documentação da função glDrawElements() em
-    // http://docs.gl/gl3/glDrawElements.
-    //
-    // Importante: estes eixos serão desenhamos com a matriz "model"
-    // definida acima, e portanto sofrerão as mesmas transformações
-    // geométricas que o cubo. Isto é, estes eixos estarão
-    // representando o sistema de coordenadas do modelo (e não o global)!
-    glDrawElements(
-        g_VirtualScene["axes"].rendering_mode,
-        g_VirtualScene["axes"].num_indices,
-        GL_UNSIGNED_INT,
-        (void*)g_VirtualScene["axes"].first_index
-    );
-
     // Informamos para a placa de vídeo (GPU) que a variável booleana
     // "render_as_black" deve ser colocada como "true". Veja o arquivo
     // "shader_vertex.glsl".
@@ -2000,7 +2788,6 @@ GLuint BuildTriangles()
     // os triângulos definidos acima. Veja a chamada glDrawElements() em main().
     return vertex_array_object_id;
 }
-
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
