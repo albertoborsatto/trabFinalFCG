@@ -4,6 +4,13 @@
 - Lucas Moreira Schirmbeck - 00324412
 - Alberto Vargas Borsatto - 00287213
 
+## Imagens
+
+  ![image](https://github.com/albertoborsatto/trabFinalFCG/assets/93798209/5cb90ba0-2855-492d-aa30-64ababbca791)
+
+  ![image](https://github.com/albertoborsatto/trabFinalFCG/assets/93798209/fc3bd734-29aa-4d6d-9ef1-4f5fffe11b97)
+
+  
 ## Distribuição de Tarefas
 
 | Critérios Técnicos                                    | Integrante    |
