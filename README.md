@@ -73,6 +73,7 @@ Encontrar e eliminar três alvos no mapa (inspirado no mapa "Shipment" de Call o
 ## Compilação
 
 O ambiente de desenvolvimento foi preparado usando VSCode, Mingw, CMake e os passos fornecidos pelo professor. A execução da aplicação pode ser realizada pressionando o botão de 'play' no VSCode.
+O executável main será encontrado dentro da pasta do projeto. O caminho é "./bin/Debug/main.exe".
 
 ## Conclusão
 
